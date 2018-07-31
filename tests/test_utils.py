@@ -6,9 +6,9 @@ from pandas.util.testing import assert_frame_equal
 
 from matplotlib.pyplot import imread
 
-from mapboxgl.utils import (df_to_geojson, scale_between, create_radius_stops,
-                            create_weight_stops, create_numeric_stops, create_color_stops, 
-                            img_encode, rgb_tuple_from_str, color_map, height_map, numeric_map)
+from mapboxgl.utils import (df_to_geojson, scale_between, create_weight_stops, 
+                            create_numeric_stops, create_color_stops, img_encode, 
+                            rgb_tuple_from_str, color_map, numeric_map)
 
 
 @pytest.fixture()
@@ -85,12 +85,6 @@ def test_color_stops_custom_null():
     """Create invalid number of color stops that do not match the number of breaks"""
     with pytest.raises(ValueError):
         create_color_stops([0, 1, 2], colors=['red', 'yellow', 'green', 'grey'])
-
-
-def test_create_radius_stops(df):
-    domain = [7678.214347826088, 5793.63142857143, 1200]
-    radius_stops = create_radius_stops(domain, 1, 10)
-    assert radius_stops == [[7678.214347826088, 1.0], [5793.63142857143, 4.0], [1200, 7.0]]
 
 
 def test_create_weight_stops(df):
@@ -200,28 +194,28 @@ def test_create_numeric_stops():
 def test_height_map():
     """Interpolate height from numeric height stops"""
     stops = [[0.0, 0], [50.0, 5000.0], [1000.0, 100000.0]]
-    assert height_map(117.0, stops, 0.0) == 11700.0
+    assert numeric_map(117.0, stops, 0.0) == 11700.0
 
 
 def test_height_map_match():
     """Interpolate height from numeric height stops"""
     match_stops = [['road', 1.0], ['fence', 15.0], ['wall', 10.0]]
-    assert height_map('fence', match_stops, 0.0) == 15.0
+    assert numeric_map('fence', match_stops, 0.0) == 15.0
 
 
 def test_height_map_no_stops():
     """Return default if length of stops argument is 0"""
     stops = []
-    assert height_map(117.0, stops, 42) == 42
+    assert numeric_map(117.0, stops, 42) == 42
 
 
 def test_height_map_default():
     """Default value when look up does not match any stop in stops"""
     stops = [[0.0, 0], [50.0, 5000.0], [1000.0, 100000.0]]
-    assert height_map(-1.0, stops, 42) == 0
+    assert numeric_map(-1.0, stops, 42) == 0
 
 
 def test_height_map_exact():
     """Compute mapping for lookup value exactly matching numeric stop in stops"""
     stops = [[0.0, 0], [50.0, 5000.0], [1000.0, 100000.0]]
-    assert height_map(50.0, stops, 42) == 5000.0
+    assert numeric_map(50.0, stops, 42) == 5000.0

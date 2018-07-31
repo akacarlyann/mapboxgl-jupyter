@@ -83,35 +83,19 @@ def scale_between(minval, maxval, numStops):
         return scale
 
 
-def create_radius_stops(breaks, min_radius, max_radius):
-    """Convert a data breaks into a radius ramp
-    """
-    num_breaks = len(breaks)
-    radius_breaks = scale_between(min_radius, max_radius, num_breaks)
-    stops = []
-
-    for i, b in enumerate(breaks):
-        stops.append([b, radius_breaks[i]])
-    return stops
-
-
 def create_weight_stops(breaks):
     """Convert data breaks into a heatmap-weight ramp
     """
-    num_breaks = len(breaks)
-    weight_breaks = scale_between(0, 1, num_breaks)
-    stops = []
-
-    for i, b in enumerate(breaks):
-        stops.append([b, weight_breaks[i]])
-    return stops
+    return create_numeric_stops(breaks, 0, 1)
 
 
 def create_numeric_stops(breaks, min_value, max_value):
     """Convert data breaks into a general numeric ramp (height, radius, weight, etc.)
+       For example: use when developing a heatmap-weight ramp (min_value=0, max_value=1) 
+       or radius ramp.
     """
-    weight_breaks = scale_between(min_value, max_value, len(breaks))
-    return [list(x) for x in zip(breaks, weight_breaks)]
+    numeric_breaks = scale_between(min_value, max_value, len(breaks))
+    return [list(x) for x in zip(breaks, numeric_breaks)]
 
 
 def create_color_stops(breaks, colors='RdYlGn', color_ramps=color_ramps):
@@ -325,65 +309,3 @@ def img_encode(arr, **kwargs):
 
     return 'data:image/{};base64,{}'.format(img_format, img_str)
 
-
-def height_map(lookup, height_stops, default_height=0.0):
-    """Return a height value (in meters) interpolated from given height_stops;
-    for use with vector-based visualizations using fill-extrusion layers
-    """
-    # if no height_stops, use default height
-    if len(height_stops) == 0:
-        return default_height
-    
-    # dictionary to lookup height from match-type height_stops
-    match_map = dict((x, y) for (x, y) in height_stops)
-
-    # if lookup matches stop exactly, return corresponding height (first priority)
-    # (includes non-numeric height_stop "keys" for finding height by match)
-    if lookup in match_map.keys():
-        return match_map.get(lookup)
-
-    # if lookup value numeric, map height by interpolating from height scale
-    if isinstance(lookup, (int, float, complex)):
-
-        # try ordering stops 
-        try:
-            stops, heights = zip(*sorted(height_stops))
-        
-        # if not all stops are numeric, attempt looking up as if categorical stops
-        except TypeError:
-            return match_map.get(lookup, default_height)
-
-        # for interpolation, all stops must be numeric
-        if not all(isinstance(x, (int, float, complex)) for x in stops):
-            return default_height
-
-        # check if lookup value in stops bounds
-        if float(lookup) <= stops[0]:
-            return heights[0]
-        
-        elif float(lookup) >= stops[-1]:
-            return heights[-1]
-        
-        # check if lookup value matches any stop value
-        elif float(lookup) in stops:
-            return heights[stops.index(lookup)]
-        
-        # interpolation required
-        else:
-
-            # identify bounding height stop values
-            lower = max([stops[0]] + [x for x in stops if x < lookup])
-            upper = min([stops[-1]] + [x for x in stops if x > lookup])
-            
-            # heights from bounding stops
-            lower_height = heights[stops.index(lower)]
-            upper_height = heights[stops.index(upper)]
-            
-            # compute linear "relative distance" from lower bound height to upper bound height
-            distance = (lookup - lower) / (upper - lower)
-
-            # return string representing rgb height value
-            return lower_height + distance * (upper_height - lower_height)
-
-    # default height value catch-all
-    return default_height

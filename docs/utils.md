@@ -70,17 +70,6 @@ minval | minimum value
 maxval | maximum value
 numStops | number of intervals
 
-## create_radius_stops
-Convert a Python list of a data domain (such as `[0, 1, 5, 100, 10000]`) into a radius ramp between a minimum and maxium radius value. 
-
-### Params
-**create_radius_stops**(_breaks, min_radius, max_radius_)
-
-Parameter | Description
---|--
-breaks | List of float values
-min_radius | Minimum radius value
-max_radius | Maximum radius value
 
 ## create_weight_stops
 Convert a Python list of a data domain (such as `[0, 1, 5, 100, 10000]`) into a weight-ramp for a heatmap.
@@ -94,7 +83,7 @@ breaks | List of float values
 
 
 ## create_numeric_stops
-Convert a Python list of a data domain (such as `[0, 1, 5, 100, 10000]`) into a generic numeric ramp between a minimum and maximum value, as in for a heatmap, choropleth 3-D extrusions, etc.
+Convert a Python list of a data domain (such as `[0, 1, 5, 100, 10000]`) into a generic numeric ramp between a minimum and maximum value, as in for a radius ramp, heatmap weight ramp, choropleth 3-D extrusions, etc.  
 
 ### Params
 **create_numeric_stops**(_breaks, min_value, max_value_)
@@ -197,23 +186,23 @@ color = color_map('California', match_color_stops, default_color='grey)')
 ```
 
 
-## height_map
-Return a height value (in meters) interpolated from given height_stops; for use with vector-based visualizations using fill-extrusion layers.
+## numeric_map
+Return a value interpolated from given numeric_stops (eg, for use with computing heights in vector-based visualizations using fill-extrusion layer )
 
 ### Params
-**height_map**(_lookup, height_stops, default_height=10.0_)
+**numeric_map**(_lookup, numeric_stops, default=0.0_)
 
 Parameter | Description
 --|--
 lookup | value is numeric for interpolated heights or string for categorical height stops
-height_stops | height ramp stops generated from `create_numeric_stops`, or custom list of numeric or categorical stops with paired heights
-default_height | height, in meters, for display of 3-D extrusion on map
+numeric_stops | value ramp stops generated from `create_numeric_stops`, or custom list of numeric or categorical stops with paired values
+default | the default value (eg height, in meters, for display of 3-D extrusion on map)
 
 ### Usage
 ```python
-from mapboxgl.utils import create_numeric_stops, height_map
+from mapboxgl.utils import create_numeric_stops, numeric_map
 
 # interpolate height
 height_stops = create_numeric_stops([0, 50, 100, 500, 1500], 0, 150000)
-height = height_map(117, height_stops)
+height = numeric_map(117, height_stops)
 ```

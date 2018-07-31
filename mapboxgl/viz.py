@@ -6,9 +6,8 @@ from IPython.core.display import HTML, display
 import numpy
 
 from mapboxgl.errors import TokenError
-from mapboxgl.utils import color_map, height_map
+from mapboxgl.utils import color_map, img_encode, numeric_map
 from mapboxgl import templates
-from mapboxgl.utils import img_encode, numeric_map
 
 
 GL_JS_VERSION = 'v0.47.0'
@@ -522,7 +521,7 @@ class ChoroplethViz(MapViz):
         for row in self.data:
 
             # map height to JSON feature using height_property
-            height = height_map(row[self.height_property], self.height_stops, self.height_default)
+            height = numeric_map(row[self.height_property], self.height_stops, self.height_default)
             
             # link to vector feature using data_join_property (from JSON object)
             vector_stops.append([row[self.data_join_property], height])

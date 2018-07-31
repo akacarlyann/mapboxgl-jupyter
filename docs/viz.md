@@ -243,7 +243,7 @@ color_stops = create_color_stops(color_breaks, colors='Blues')
 # Generate radius breaks from data domain and circle-radius range
 measure_radius = 'Avg Medicare Payments'
 radius_breaks = [round(df[measure_radius].quantile(q=x*0.1), 2) for x in range(2,10)]
-radius_stops = create_radius_stops(radius_breaks, 0.5, 10)
+radius_stops = create_numeric_stops(radius_breaks, 0.5, 10)
 
 # Create the viz
 viz = GraduatedCircleViz('points.geojson',

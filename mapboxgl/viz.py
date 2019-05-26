@@ -103,27 +103,12 @@ class MapViz(object):
                  double_click_zoom_on=True,
                  scroll_zoom_on=True,
                  touch_zoom_on=True,
-                 legend=True,
-                 legend_layout='vertical',
-                 legend_function='color',
-                 legend_gradient=False,
-                 legend_style='',
-                 legend_fill='white',
-                 legend_header_fill='white',
-                 legend_text_color='#6e6e6e',
-                 legend_text_numeric_precision=None,
-                 legend_title_halo_color='white',
-                 legend_key_shape='square',
-                 legend_key_borders_on=True, 
+                 legend=False,
                  scale=False,
-                 scale_unit_system='metric',
-                 scale_position='bottom-left',
-                 scale_border_color='#6e6e6e', 
-                 scale_background_color='white',
-                 scale_text_color='#131516',
-                 popup_open_action='hover',
-                 add_snapshot_links=False):
-        """Construct a MapViz object
+                 add_snapshot_links=False,
+                 popup_open_action='hover'):
+        """
+        Construct a MapViz object
 
         :param data: GeoJSON Feature Collection
         :param vector_url: optional property to define vector data source
@@ -135,41 +120,20 @@ class MapViz(object):
         :param access_token: Mapbox GL JS access token.
         :param center: map center point
         :param style: url to mapbox style or stylesheet as a Python dictionary in JSON format
-        :param label_property: property to use for marker label
-        :param label_size: size of label text
-        :param label_color: color of label text
-        :param label_halo_color: color of label text halo
-        :param label_halo_width: width of label text halo
+
         :param div_id: The HTML div id of the map container in the viz
         :param width: The CSS width of the HTML div id in % or pixels.
         :param height: The CSS height of the HTML map div in % or pixels.
         :param zoom: starting zoom level for map
-        :param opacity: opacity of map data layer
         :param pitch: starting pitch (in degrees) for map
         :param bearing: starting bearing (in degrees) for map
         :param box_zoom_on: boolean indicating if map can be zoomed to a region by dragging a bounding box
         :param double_click_zoom_on: boolean indicating if map can be zoomed with double-click
         :param scroll_zoom_on: boolean indicating if map can be zoomed with the scroll wheel
         :param touch_zoom_on: boolean indicating if map can be zoomed with two-finger touch gestures
-        :param legend: boolean for whether to show legend on map
-        :param legend_layout: determines if horizontal or vertical legend used
-        :param legend_function: controls whether legend is color or radius-based
-        :param legend_style: reserved for future custom CSS loader
-        :param legend_gradient: boolean to determine if legend keys are discrete or gradient
-        :param legend_fill: string background color for legend, default is white
-        :param legend_header_fill: string background color for legend header (in vertical layout), default is #eee
-        :param legend_text_color: string color for legend text default is #6e6e6e
-        :param legend_text_numeric_precision: decimal precision for numeric legend values
-        :param legend_title_halo_color: color of legend title text halo
-        :param legend_key_shape: shape of the legend item keys, default varies by viz type; one of square, contiguous_bar, rounded-square, circle, line
-        :param legend_key_borders_on: boolean for whether to show/hide legend key borders
-        :param scale: add map control showing current scale of map
-        :param scale_unit_system: choose units for scale display (metric, nautical or imperial)
-        :param scale_position: location of the scale annotation
-        :param scale_border_color: border color of the scale annotation
-        :param scale_background_color: fill color of the scale annotation
-        :param scale_text_color: text color the scale annotation
         :param popup_open_action: controls behavior of opening and closing feature popups; one of 'hover' or 'click'
+        :param legend: boolean for whether to show legend on map
+        :param scale: add map control showing current scale of map
         :param add_snapshot_links: boolean switch for adding buttons to download screen captures of map or legend
 
         """
@@ -216,30 +180,21 @@ class MapViz(object):
         self.double_click_zoom_on = double_click_zoom_on
         self.scroll_zoom_on = scroll_zoom_on
         self.touch_zoom_on = touch_zoom_on
+        self.popup_open_action = popup_open_action
 
         # legend configuration
-        self.legend = legend
-        self.legend_layout = legend_layout
-        self.legend_function = legend_function
-        self.legend_style = legend_style
-        self.legend_gradient = legend_gradient
-        self.legend_fill = legend_fill
-        self.legend_header_fill = legend_header_fill
-        self.legend_text_color = legend_text_color
-        self.legend_text_numeric_precision = legend_text_numeric_precision
-        self.legend_title_halo_color = legend_title_halo_color
-        self.legend_key_shape = legend_key_shape
-        self.legend_key_borders_on = legend_key_borders_on
-        self.popup_open_action = popup_open_action
-        self.add_snapshot_links = add_snapshot_links
+        self.legend = False
+        self.legend_gradient = False
+        
+        # export "snapshot" configuration
+        self.add_snapshot_links = False
 
         # scale configuration
-        self.scale = scale
-        self.scale_unit_system = scale_unit_system
-        self.scale_position = scale_position
-        self.scale_border_color = scale_border_color
-        self.scale_background_color = scale_background_color
-        self.scale_text_color = scale_text_color
+        self.scale = False
+
+        # layers configuration
+        self.layers = {}
+        self.layer_id_counter = 0
 
     def as_iframe(self, html_data):
         """Build the HTML representation for the mapviz."""
@@ -261,6 +216,8 @@ class MapViz(object):
         display(HTML(map_html))
 
     def add_unique_template_variables(self, options):
+        """
+        """
         pass
 
     def create_html(self, filename=None):
@@ -290,15 +247,31 @@ class MapViz(object):
             scrollZoomOn=json.dumps(self.scroll_zoom_on),
             touchZoomOn=json.dumps(self.touch_zoom_on),
             popupOpensOnHover=self.popup_open_action=='hover',
-            includeSnapshotLinks=self.add_snapshot_links,
-            preserveDrawingBuffer=json.dumps(self.add_snapshot_links),
             showScale=self.scale,
-            scaleUnits=self.scale_unit_system,
-            scaleBorderColor=self.scale_border_color,
-            scalePosition=self.scale_position,
-            scaleFillColor=self.scale_background_color,
-            scaleTextColor=self.scale_text_color,
+            includeSnapshotLinks=self.add_snapshot_links,
+            preserveDrawingBuffer=json.dumps(False),
+
+            showLegend=self.legend,
+            legendGradient=json.dumps(False),
+            legendKeyBordersOn=json.dumps(False),
+
         )
+
+        if self.add_snapshot_links:
+            options.update(dict(
+                includeSnapshotLinks=self.add_snapshot_links,
+                preserveDrawingBuffer=json.dumps(self.add_snapshot_links),
+            ))
+
+        if self.scale:
+            options.update(dict(
+                showScale=self.scale,
+                scaleUnits=self.scale_unit_system,
+                scaleBorderColor=self.scale_border_color,
+                scalePosition=self.scale_position,
+                scaleFillColor=self.scale_background_color,
+                scaleTextColor=self.scale_text_color,
+        ))
 
         if self.legend:
 
@@ -348,13 +321,195 @@ class MapViz(object):
 
         self.add_unique_template_variables(options)
 
+        # build html from template(s)
         if filename:
             html = templates.format(self.template, **options)
-            with codecs.open(filename, "w", "utf-8-sig") as f:
+            with codecs.open(filename, 'w', 'utf-8-sig') as f:
                 f.write(html)
             return None
         else:
             return templates.format(self.template, **options)
+
+    def add_legend(self, map_legend_object=None):
+        """
+        add MapLegend object
+        """
+        if isinstance(map_legend_object, MapLegend):
+            self.legend = True
+            self.legend_layout = map_legend_object.legend_layout
+            self.legend_function = map_legend_object.legend_function
+            self.legend_style = map_legend_object.legend_style
+            self.legend_gradient = map_legend_object.legend_gradient
+            self.legend_fill = map_legend_object.legend_fill
+            self.legend_header_fill = map_legend_object.legend_header_fill
+            self.legend_text_color = map_legend_object.legend_text_color
+            self.legend_text_numeric_precision = map_legend_object.legend_text_numeric_precision
+            self.legend_title_halo_color = map_legend_object.legend_title_halo_color
+            if not self.legend_key_shape:
+                self.legend_key_shape = map_legend_object.legend_key_shape
+            self.legend_key_borders_on = map_legend_object.legend_key_borders_on
+
+        else:
+            raise TypeError('<map_legend_object> must be instance of <MapLegend>.')
+
+    def add_map_scale(self, map_scale_object=None):
+        """
+        add MapScale object
+        """
+        if isinstance(map_scale_object, MapScale):
+            self.scale = True
+            self.scale_unit_system = map_scale_object.scale_unit_system
+            self.scale_position = map_scale_object.scale_position
+            self.scale_border_color = map_scale_object.scale_border_color
+            self.scale_background_color = map_scale_object.scale_background_color
+            self.scale_text_color = map_scale_object.scale_text_color
+        elif map_scale_object is None:
+            self.scale = True
+            map_scale_object = MapScale()
+            self.scale_unit_system = map_scale_object.scale_unit_system
+            self.scale_position = map_scale_object.scale_position
+            self.scale_border_color = map_scale_object.scale_border_color
+            self.scale_background_color = map_scale_object.scale_background_color
+            self.scale_text_color = map_scale_object.scale_text_color
+        else:
+            raise TypeError('<map_scale_object> must be instance of <MapScale>.')
+
+    def add_map_snapshot(self, map_snapshot_object=None):
+        """
+        add 'snapshot' or screen capture menu
+        """
+        if isinstance(map_snapshot_object, MapScale):
+            self.add_snapshot_links = True
+            self.snapshot_position = map_snapshot_object.snapshot_position
+            self.snapshot_border_color = map_snapshot_object.snapshot_border_color
+            self.snapshot_background_color = map_snapshot_object.snapshot_background_color
+            self.snapshot_text_color = map_snapshot_object.snapshot_text_color
+        elif map_snapshot_object is None:
+            self.add_snapshot_links = True
+            map_snapshot_object = MapSnapshot()
+            self.snapshot_position = map_snapshot_object.snapshot_position
+            self.snapshot_border_color = map_snapshot_object.snapshot_border_color
+            self.snapshot_background_color = map_snapshot_object.snapshot_background_color
+            self.snapshot_text_color = map_snapshot_object.snapshot_text_color
+        else:
+            raise TypeError('<map_snapshot_object> must be instance of <MapSnapshot>.')
+
+    def remove_map_scale(self):
+        """
+        remove or hide map's scale bar
+        """
+        self.scale = False
+
+    def remove_map_snapshot(self):
+        """
+        remove or hide map's snapshot menu
+        """
+        self.add_snapshot_links = False
+
+    def remove_legend(self):
+        """
+        remove or hide map's legend
+        """
+        self.legend = False
+
+
+class MapScale(object):
+    """
+    map scale bar configuration
+    """
+
+    def __init__(self,
+                 scale=False,
+                 scale_unit_system='metric',
+                 scale_position='bottom-left',
+                 scale_border_color='#6e6e6e', 
+                 scale_background_color='white',
+                 scale_text_color='#131516'):
+        """
+        :param scale: add map control showing current scale of map
+        :param scale_unit_system: choose units for scale display (metric, nautical or imperial)
+        :param scale_position: location of the scale annotation
+        :param scale_border_color: border color of the scale annotation
+        :param scale_background_color: fill color of the scale annotation
+        :param scale_text_color: text color the scale annotation
+        """
+        self.scale = scale
+        self.scale_unit_system = scale_unit_system
+        self.scale_position = scale_position
+        self.scale_border_color = scale_border_color
+        self.scale_background_color = scale_background_color
+        self.scale_text_color = scale_text_color
+
+
+class MapSnapshot(object):
+    """
+    map control menu for exporting screen capture of map and legend
+    """
+    
+    def __init__(self, 
+                 add_snapshot_links=False,
+                 snapshot_position=None,
+                 snapshot_border_color='#6e6e6e',
+                 snapshot_background_color='#fff',
+                 snapshot_text_color='#131516'):
+
+        """
+        :param add_snapshot_links: boolean switch for adding buttons to download 
+                                   screen captures of map or legend
+        :param snapshot_position: snapshot_position
+        :param snapshot_border_color: snapshot_border_color
+        :param snapshot_background_color: snapshot_background_color
+        :param snapshot_text_color: snapshot_text_color
+        """
+        self.add_snapshot_links = add_snapshot_links
+        self.snapshot_position = snapshot_position
+        self.snapshot_border_color = snapshot_border_color
+        self.snapshot_background_color = snapshot_background_color
+        self.snapshot_text_color = snapshot_text_color
+
+
+class MapLegend(object):
+    """
+    map legend configuration object
+    """
+
+    def __init__(self,
+                 legend_layout='vertical',
+                 legend_function='color',
+                 legend_gradient=False,
+                 legend_style='',
+                 legend_fill='white',
+                 legend_header_fill='white',
+                 legend_text_color='#6e6e6e',
+                 legend_text_numeric_precision=None,
+                 legend_title_halo_color='white',
+                 legend_key_shape='square',
+                 legend_key_borders_on=True):
+        """
+        :param legend_layout: determines if horizontal or vertical legend used
+        :param legend_function: controls whether legend is color or radius-based
+        :param legend_style: reserved for future custom CSS loader
+        :param legend_gradient: boolean to determine if legend keys are discrete or gradient
+        :param legend_fill: string background color for legend, default is white
+        :param legend_header_fill: string background color for legend header (in vertical layout), default is #eee
+        :param legend_text_color: string color for legend text default is #6e6e6e
+        :param legend_text_numeric_precision: decimal precision for numeric legend values
+        :param legend_title_halo_color: color of legend title text halo
+        :param legend_key_shape: shape of the legend item keys, default varies by viz type; one of square, contiguous_bar, rounded-square, circle, line
+        :param legend_key_borders_on: boolean for whether to show/hide legend key borders
+        """
+
+        self.legend_layout = legend_layout
+        self.legend_function = legend_function
+        self.legend_style = legend_style
+        self.legend_gradient = legend_gradient
+        self.legend_fill = legend_fill
+        self.legend_header_fill = legend_header_fill
+        self.legend_text_color = legend_text_color
+        self.legend_text_numeric_precision = legend_text_numeric_precision
+        self.legend_title_halo_color = legend_title_halo_color
+        self.legend_key_shape = legend_key_shape
+        self.legend_key_borders_on = legend_key_borders_on
 
 
 class CircleViz(VectorMixin, MapViz):

@@ -11,6 +11,7 @@ from mapboxgl.errors import TokenError, LegendError
 from mapboxgl.utils import color_map, numeric_map, img_encode, geojson_to_dict_list
 from mapboxgl import templates
 
+from mapboxgl.layers import *
 
 GL_JS_VERSION = 'v0.53.0'
 
@@ -75,28 +76,15 @@ class VectorMixin(object):
 class MapViz(object):
 
     def __init__(self,
-                 data,
-                 vector_url=None,
-                 vector_layer_name=None,
-                 vector_join_property=None,
-                 data_join_property=None,
-                 disable_data_join=False,
                  access_token=None,
                  center=(0, 0),
-                 below_layer='',
-                 opacity=1,
                  div_id='map',
                  height='500px',
                  style='mapbox://styles/mapbox/light-v10?optimize=true',
-                 label_property=None,
-                 label_size=8,
-                 label_color='#131516',
-                 label_halo_color='white',
-                 label_halo_width=1,
                  width='100%',
                  zoom=0,
-                 min_zoom=0,
-                 max_zoom=24,
+                 # min_zoom=0,
+                 # max_zoom=24,
                  pitch=0,
                  bearing=0,
                  box_zoom_on=True,
@@ -145,19 +133,12 @@ class MapViz(object):
                              'If you already have an account, you can retreive your token at https://www.mapbox.com/account/.')
         self.access_token = access_token
 
-        self.data = data
-        
-        self.vector_url = vector_url
-        self.vector_layer_name = vector_layer_name
-        self.vector_join_property = vector_join_property
-        self.data_join_property = data_join_property
-        self.disable_data_join = disable_data_join
-
         self.template = 'map'
-        try:
-            self.check_vector_template()
-        except AttributeError:
-            self.vector_source = False
+        # try:
+        #     self.check_vector_template()
+        # except AttributeError:
+        #     self.vector_source = False
+        # self.vector_source = False
 
         self.div_id = div_id
         self.width = width
@@ -165,15 +146,8 @@ class MapViz(object):
         self.style = style
         self.center = center
         self.zoom = zoom
-        self.below_layer = below_layer
-        self.opacity = opacity
-        self.label_property = label_property
-        self.label_color = label_color
-        self.label_size = label_size
-        self.label_halo_color = label_halo_color
-        self.label_halo_width = label_halo_width
-        self.min_zoom = min_zoom
-        self.max_zoom = max_zoom
+        # self.min_zoom = min_zoom
+        # self.max_zoom = max_zoom
         self.pitch = pitch
         self.bearing = bearing
         self.box_zoom_on = box_zoom_on
@@ -235,11 +209,11 @@ class MapViz(object):
             style=style,
             center=list(self.center),
             zoom=self.zoom,
-            geojson_data=json.dumps(self.data, ensure_ascii=False),
-            belowLayer=self.below_layer,
-            opacity=self.opacity,
-            minzoom=self.min_zoom,
-            maxzoom=self.max_zoom,
+            # geojson_data=json.dumps(self.data, ensure_ascii=False),
+            # belowLayer=self.below_layer,
+            # opacity=self.opacity,
+            # minzoom=self.min_zoom,
+            # maxzoom=self.max_zoom,
             pitch=self.pitch, 
             bearing=self.bearing,
             boxZoomOn=json.dumps(self.box_zoom_on),
@@ -250,11 +224,10 @@ class MapViz(object):
             showScale=self.scale,
             includeSnapshotLinks=self.add_snapshot_links,
             preserveDrawingBuffer=json.dumps(False),
-
             showLegend=self.legend,
             legendGradient=json.dumps(False),
             legendKeyBordersOn=json.dumps(False),
-
+            layersHtml=''
         )
 
         if self.add_snapshot_links:
@@ -294,41 +267,50 @@ class MapViz(object):
                 legendKeyBordersOn=json.dumps(self.legend_key_borders_on)
             )
 
-        if self.vector_source:
-            options.update(
-                vectorUrl=self.vector_url,
-                vectorLayer=self.vector_layer_name,
-                vectorJoinDataProperty=self.vector_join_property,
-                joinData=json.dumps(False),
-                dataJoinProperty=self.data_join_property,
-                enableDataJoin=not self.disable_data_join
-            )
-            data = geojson_to_dict_list(self.data)
-            if bool(data):
-                options.update(joinData=json.dumps(data, ensure_ascii=False))
+        # if self.vector_source:
+        #     options.update(
+        #         vectorUrl=self.vector_url,
+        #         vectorLayer=self.vector_layer_name,
+        #         vectorJoinDataProperty=self.vector_join_property,
+        #         joinData=json.dumps(False),
+        #         dataJoinProperty=self.data_join_property,
+        #         enableDataJoin=not self.disable_data_join
+        #     )
+        #     data = geojson_to_dict_list(self.data)
+        #     if bool(data):
+        #         options.update(joinData=json.dumps(data, ensure_ascii=False))
 
-        if self.label_property is None:
-            options.update(labelProperty=None)
-        else:
-            options.update(labelProperty='{' + self.label_property + '}')
+        # if self.label_property is None:
+        #     options.update(labelProperty=None)
+        # else:
+        #     options.update(labelProperty='{' + self.label_property + '}')
         
-        options.update(
-            labelColor=self.label_color,
-            labelSize=self.label_size,
-            labelHaloColor=self.label_halo_color,
-            labelHaloWidth=self.label_halo_width
-        )
+        # options.update(
+        #     labelColor=self.label_color,
+        #     labelSize=self.label_size,
+        #     labelHaloColor=self.label_halo_color,
+        #     labelHaloWidth=self.label_halo_width
+        # )
 
-        self.add_unique_template_variables(options)
+        # self.add_unique_template_variables(options)
 
         # build html from template(s)
+
+        rendered_html = ''
+        for layer_id, layer in self.layers.items():
+            rendered_html = rendered_html + '\n' + layer.create_layer_html(options)
+
+        options.update(layersHtml=rendered_html)
+
+        html = templates.format(self.template, **options)
+
         if filename:
-            html = templates.format(self.template, **options)
+
             with codecs.open(filename, 'w', 'utf-8-sig') as f:
                 f.write(html)
             return None
         else:
-            return templates.format(self.template, **options)
+            return html
 
     def add_legend(self, map_legend_object=None):
         """
@@ -411,6 +393,31 @@ class MapViz(object):
         remove or hide map's legend
         """
         self.legend = False
+
+    def add_layer(self, layer_object):
+        """
+        add MapLayer instance to MapViz
+        """
+        # layer_object.layer_id = self.layer_id_counter
+        # self.layer_id_counter += 1
+
+        if layer_object.layer_id is None:
+            if len(self.layers.keys()) > 0:
+                layer_object.layer_id = max(self.layers.keys()) + 1
+            else:
+                layer_object.layer_id = 0
+
+        i = len(self.layers)
+        self.layers.update({i: layer_object})
+
+    def remove_layer(self, layer_object):
+        """
+        remove MapLayer instance from MapViz
+        """
+        self.layers = {k: v for k, v in self.layers.items() if v != layer_object}
+
+        # self.layers.pop(layer_object)
+        # layer.show_legend = False
 
 
 class MapScale(object):
@@ -540,37 +547,57 @@ class CircleViz(VectorMixin, MapViz):
         :param highlight_color: color for feature selection, hover, or highlight
 
         """
-        super(CircleViz, self).__init__(data, *args, **kwargs)
 
-        self.template = 'circle'
-        self.check_vector_template()
+        # print(kwargs)
+        # print(kwargs.pop('color_property'))
 
-        self.color_property = color_property
-        self.color_stops = color_stops
-        self.radius = radius
-        self.stroke_color = stroke_color
-        self.stroke_width = stroke_width
-        self.color_function_type = color_function_type
-        self.color_default = color_default
-        self.legend_key_shape = legend_key_shape
-        self.highlight_color = highlight_color
+        super(CircleViz, self).__init__(**kwargs)
 
-    def add_unique_template_variables(self, options):
-        """Update map template variables specific to circle visual"""
-        options.update(dict(
-            geojson_data=json.dumps(self.data, ensure_ascii=False),
-            colorProperty=self.color_property,
-            colorType=self.color_function_type,
-            colorStops=self.color_stops,
-            strokeWidth=self.stroke_width,
-            strokeColor=self.stroke_color,
-            radius=self.radius,
-            defaultColor=self.color_default,
-            highlightColor=self.highlight_color
-        ))
+        # print(kwargs)
 
-        if self.vector_source:
-            options.update(vectorColorStops=self.generate_vector_color_map())
+        circle_layer = CircleLayer(data,
+                                   color_property=color_property,
+                                   color_stops=color_stops,
+                                   radius=radius,
+                                   stroke_color=stroke_color,
+                                   stroke_width=stroke_width,
+                                   color_function_type=color_function_type,
+                                   color_default=color_default,
+                                   legend_key_shape=legend_key_shape,
+                                   highlight_color=highlight_color)
+
+
+        self.add_layer(circle_layer)
+
+        # self.template = 'circle'
+        # self.check_vector_template()
+
+        # self.color_property = color_property
+        # self.color_stops = color_stops
+        # self.radius = radius
+        # self.stroke_color = stroke_color
+        # self.stroke_width = stroke_width
+        # self.color_function_type = color_function_type
+        # self.color_default = color_default
+        # self.legend_key_shape = legend_key_shape
+        # self.highlight_color = highlight_color
+
+    # def add_unique_template_variables(self, options):
+    #     """Update map template variables specific to circle visual"""
+    #     options.update(dict(
+    #         geojson_data=json.dumps(self.data, ensure_ascii=False),
+    #         colorProperty=self.color_property,
+    #         colorType=self.color_function_type,
+    #         colorStops=self.color_stops,
+    #         strokeWidth=self.stroke_width,
+    #         strokeColor=self.stroke_color,
+    #         radius=self.radius,
+    #         defaultColor=self.color_default,
+    #         highlightColor=self.highlight_color
+    #     ))
+
+    #     if self.vector_source:
+    #         options.update(vectorColorStops=self.generate_vector_color_map())
 
 
 class GraduatedCircleViz(VectorMixin, MapViz):

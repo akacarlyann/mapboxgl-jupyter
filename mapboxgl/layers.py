@@ -413,10 +413,29 @@ class ClusteredCircleLayer(MapLayer):
 #         self.below_layer = below_layer
 
 
-# class ImageLayer(MapLayer):
+class ImageLayer(MapLayer):
 
-#     def __init__(self, *args, **kwargs):
-#         self.below_layer = below_layer
+    def __init__(self, 
+                 image,
+                 coordinates,
+                 legend=False,
+                 *args, 
+                 **kwargs):
+
+        super(ImageLayer, self).__init__(None, *args, **kwargs)
+
+        self.template = 'image_layer'
+        if type(image) is numpy.ndarray:
+            image = img_encode(image)
+        self.image = image
+        self.coordinates = coordinates
+        self.legend = legend
+
+    def add_unique_layer_variables(self, options):
+        """Update map template variables specific to image visual"""
+        options.update(dict(
+            image=self.image,
+            coordinates=self.coordinates))
 
 
 # class RasterTilesLayer(MapLayer):

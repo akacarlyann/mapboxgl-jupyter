@@ -435,7 +435,6 @@ class CircleViz(MapViz):
                  highlight_color='black',
                  min_zoom=0,
                  max_zoom=24,
-                 layer_id=None,
                  popup_open_action='hover',
                  *args,
                  **kwargs):
@@ -515,7 +514,6 @@ class GraduatedCircleViz(MapViz):
                  highlight_color='black',
                  min_zoom=0,
                  max_zoom=24,
-                 layer_id=None,
                  popup_open_action='hover',
                  *args,
                  **kwargs):
@@ -636,7 +634,6 @@ class ClusteredCircleViz(MapViz):
                  opacity=1,
                  min_zoom=0,
                  max_zoom=24,
-                 layer_id=None,
                  color_stops=None,
                  radius_stops=None,
                  cluster_radius=30,
@@ -803,6 +800,10 @@ class ImageViz(MapViz):
                  image,
                  coordinates,
                  legend=False,
+                 below_layer='waterway-label',
+                 opacity=1,
+                 min_zoom=0,
+                 max_zoom=24,
                  *args,
                  **kwargs):
         """Construct a Mapviz object
@@ -813,20 +814,13 @@ class ImageViz(MapViz):
         :param legend: default setting is to hide heatmap legend
 
         """
-        super(ImageViz, self).__init__(None, *args, **kwargs)
+        super(ImageViz, self).__init__(*args, **kwargs)
 
-        if type(image) is numpy.ndarray:
-            image = img_encode(image)
+        layer = ImageLayer(image,
+                           coordinates,
+                           legend=False)
 
-        self.template = 'image'
-        self.image = image
-        self.coordinates = coordinates
-
-    def add_unique_template_variables(self, options):
-        """Update map template variables specific to image visual"""
-        options.update(dict(
-            image=self.image,
-            coordinates=self.coordinates))
+        self.add_layer(layer)
 
 
 class RasterTilesViz(MapViz):

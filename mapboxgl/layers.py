@@ -438,10 +438,45 @@ class ImageLayer(MapLayer):
             coordinates=self.coordinates))
 
 
-# class RasterTilesLayer(MapLayer):
+class RasterTilesLayer(MapLayer):
 
-#     def __init__(self, *args, **kwargs):
-#         self.below_layer = below_layer
+    def __init__(self, 
+                 tiles_url,
+                 tiles_size=256,
+                 tiles_bounds=None,
+                 tiles_minzoom=0,
+                 tiles_maxzoom=22,
+                 legend=False,
+                 *args, 
+                 **kwargs):
+        """
+        Construct a raster tiles layer object
+
+        :param tiles_url: property to determine tiles url endpoint
+        :param tiles_size: property to determine displayed tiles size
+        :param tiles_bounds: property to determine the tiles endpoint bounds
+        :param tiles_minzoom: property to determine the tiles endpoint min zoom
+        :param tiles_max: property to determine the tiles endpoint max zoom
+        :param legend: default setting is to hide heatmap legend
+
+        """
+        super(RasterTilesLayer, self).__init__(None, *args, **kwargs)
+
+        self.template = 'raster_layer'
+        self.tiles_url = tiles_url
+        self.tiles_size = tiles_size
+        self.tiles_bounds = tiles_bounds
+        self.tiles_minzoom = tiles_minzoom
+        self.tiles_maxzoom = tiles_maxzoom
+   
+    def add_unique_layer_variables(self, options):
+        """Update map template variables specific to a raster visual"""
+        options.update(dict(
+            tiles_url=self.tiles_url,
+            tiles_size=self.tiles_size,
+            tiles_minzoom=self.tiles_minzoom,
+            tiles_maxzoom=self.tiles_maxzoom,
+            tiles_bounds=self.tiles_bounds if self.tiles_bounds else 'undefined'))
 
 
 # class LinestringLayer(MapLayer):

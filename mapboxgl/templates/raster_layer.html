@@ -1,0 +1,20 @@
+
+    {% block legend %}{% endblock legend %}
+
+
+    let params = {
+        "type": "raster",
+        "tiles": ["{{ tiles_url }}"],
+        "tileSize": {{ tiles_size }},
+        "minzoom": {{ tiles_minzoom }},
+        "maxzoom": {{ tiles_maxzoom }}
+    }
+    if ({{ tiles_bounds }} !== undefined) { params.bounds = {{ tiles_bounds }} };
+
+    map.addSource("raster-tiles-{{ layerId }}", params);
+
+    map.addLayer({
+        "id": "raster-tiles-{{ layerId }}",
+        "type": "raster",
+        "source": "raster-tiles-{{ layerId }}"
+    }, "{{ belowLayer }}" );

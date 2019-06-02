@@ -1,7 +1,7 @@
 
       {% block legend %}{% endblock legend %}
 
-      map.addSource("image", {
+      map.addSource("image-{{ layerId }}", {
          "type": "image",
          "url": "{{ image }}", // url or base64 encoded image
          "coordinates": {{ coordinates }}
@@ -10,5 +10,5 @@
       map.addLayer({
         "id": 'image-{{ layerId }}',
         "type": "raster",
-        "source": "image"
+        "source": "image-{{ layerId }}"
       }, "{{ belowLayer }}");

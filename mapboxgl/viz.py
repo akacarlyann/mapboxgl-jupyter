@@ -435,6 +435,7 @@ class CircleViz(MapViz):
                  highlight_color='black',
                  min_zoom=0,
                  max_zoom=24,
+                 layer_id=None,
                  popup_open_action='hover',
                  *args,
                  **kwargs):
@@ -514,6 +515,7 @@ class GraduatedCircleViz(MapViz):
                  highlight_color='black',
                  min_zoom=0,
                  max_zoom=24,
+                 layer_id=None,
                  popup_open_action='hover',
                  *args,
                  **kwargs):
@@ -634,6 +636,7 @@ class ClusteredCircleViz(MapViz):
                  opacity=1,
                  min_zoom=0,
                  max_zoom=24,
+                 layer_id=None,
                  color_stops=None,
                  radius_stops=None,
                  cluster_radius=30,
@@ -818,7 +821,11 @@ class ImageViz(MapViz):
 
         layer = ImageLayer(image,
                            coordinates,
-                           legend=False)
+                           legend=legend,
+                           below_layer=below_layer,
+                           opacity=opacity,
+                           min_zoom=min_zoom,
+                           max_zoom=max_zoom)
 
         self.add_layer(layer)
 
@@ -845,23 +852,16 @@ class RasterTilesViz(MapViz):
         :param legend: default setting is to hide heatmap legend
 
         """
-        super(RasterTilesViz, self).__init__(None, *args, **kwargs)
+        super(RasterTilesViz, self).__init__(*args, **kwargs)
 
-        self.template = 'raster'
-        self.tiles_url = tiles_url
-        self.tiles_size = tiles_size
-        self.tiles_bounds = tiles_bounds
-        self.tiles_minzoom = tiles_minzoom
-        self.tiles_maxzoom = tiles_maxzoom
+        layer = RasterTilesLayer(tiles_url=tiles_url,
+                                 tiles_size=tiles_size,
+                                 tiles_bounds=tiles_bounds,
+                                 tiles_minzoom=tiles_minzoom,
+                                 tiles_maxzoom=tiles_maxzoom,
+                                 legend=legend)
 
-    def add_unique_template_variables(self, options):
-        """Update map template variables specific to a raster visual"""
-        options.update(dict(
-            tiles_url=self.tiles_url,
-            tiles_size=self.tiles_size,
-            tiles_minzoom=self.tiles_minzoom,
-            tiles_maxzoom=self.tiles_maxzoom,
-            tiles_bounds=self.tiles_bounds if self.tiles_bounds else 'undefined'))
+        self.add_layer(layer)
 
 
 class LinestringViz(MapViz):

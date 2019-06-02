@@ -1,0 +1,45 @@
+        {% block legend %}{% endblock legend %}
+        
+        {% block heatmap %}
+
+        // Add data source
+        map.addSource("data-{{ layerId }}", {
+            "type": "geojson",
+            "data": {{ geojson_data }},
+            "buffer": 1,
+            "maxzoom": 14,
+            "generateId": true
+        });
+        
+        // Add heatmap data layer
+        map.addLayer({
+            "id": "heatmap-{{ layerId }}",
+            "source": "data-{{ layerId }}",
+            "type": "heatmap",
+            "maxzoom": {{ maxzoom }},
+            "minzoom": {{ minzoom }},
+            "paint": {
+                {% if radiusStops %}
+                    "heatmap-radius": generatePropertyExpression('interpolate', 'zoom', {{ radiusStops }}),
+                {% endif %}
+                {% if weightProperty and weightStops %}
+                    "heatmap-weight": generateInterpolateExpression( "{{ weightProperty }}", {{ weightStops }} ),
+                {% endif %}
+                {% if intensityStops %}
+                    "heatmap-intensity": generateInterpolateExpression('zoom', {{ intensityStops }} ),
+                {% endif %}
+                {% if colorStops %}
+                    "heatmap-color" : generateInterpolateExpression('heatmap-density', {{ colorStops }} ),
+                {% endif %}
+                "heatmap-opacity" : {{ opacity }}
+            }
+        }, "{{ belowLayer }}" );
+
+        {% endblock heatmap %}
+        
+        // Fly to on click
+        map.on('click', 'heatmap-{{ layerId }}', function(e) {
+            map.easeTo({
+                center: e.features[0].geometry.coordinates
+            });
+        });

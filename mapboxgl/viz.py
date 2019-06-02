@@ -574,6 +574,16 @@ class HeatmapViz(MapViz):
 
     def __init__(self,
                  data,
+                 vector_url=None,
+                 vector_layer_name=None,
+                 vector_join_property=None,
+                 data_join_property=None,
+                 disable_data_join=False,
+                 below_layer='waterway-label',
+                 opacity=1,
+                 min_zoom=0,
+                 max_zoom=24,
+                 layer_id=None,
                  weight_property=None,
                  weight_stops=None,
                  color_stops=None,
@@ -590,52 +600,26 @@ class HeatmapViz(MapViz):
         :param intensity_stops: stops to determine the heatmap intensity based on zoom. EX: [[0, 0.1], [20, 5]]
         
         """
-        super(HeatmapViz, self).__init__(data, *args, **kwargs)
+        super(HeatmapViz, self).__init__(*args, **kwargs)
 
-        self.template = 'heatmap'
-        self.check_vector_template()
+        layer = HeatmapLayer(data,
+                             vector_url=vector_url,
+                             vector_layer_name=vector_layer_name,
+                             vector_join_property=vector_join_property,
+                             data_join_property=data_join_property,
+                             disable_data_join=disable_data_join,
+                             weight_property=weight_property,
+                             weight_stops=weight_stops,
+                             color_stops=color_stops,
+                             radius_stops=radius_stops,
+                             intensity_stops=intensity_stops,
+                             below_layer=below_layer,
+                             opacity=opacity,
+                             min_zoom=min_zoom,
+                             max_zoom=max_zoom,
+                             layer_id=layer_id)
 
-        self.weight_property = weight_property
-        self.weight_stops = weight_stops
-        if color_stops:
-            # Make the first color stop in a heatmap have opacity 0 for good visual effect
-            self.color_stops = [[0.00001, 'rgba(0,0,0,0)']] + color_stops
-        self.radius_stops = radius_stops
-        self.intensity_stops = intensity_stops
-
-    def add_unique_template_variables(self, options):
-        """Update map template variables specific to heatmap visual"""
-        options.update(dict(
-            colorStops=self.color_stops,
-            radiusStops=self.radius_stops,
-            weightProperty=self.weight_property,
-            weightStops=self.weight_stops,
-            intensityStops=self.intensity_stops,
-        ))
-        if self.vector_source:
-            options.update(dict(
-                vectorWeightStops=self.generate_vector_numeric_map('weight')))
-
-    def generate_vector_numeric_map(self, numeric_property):
-        """Generate stops array for use with match expression in mapbox template"""
-        vector_stops = []
-        
-        lookup_property = getattr(self, '{}_property'.format(numeric_property))
-        numeric_stops = getattr(self, '{}_stops'.format(numeric_property))
-
-        # if join data specified as filename or URL, parse JSON to list of Python dicts
-        if type(self.data) == str:
-            self.data = geojson_to_dict_list(self.data)
-
-        for row in self.data:
-
-            # map value to JSON feature using the numeric property
-            value = numeric_map(row[lookup_property], numeric_stops, 0)
-            
-            # link to vector feature using data_join_property (from JSON object)
-            vector_stops.append([row[self.data_join_property], value])
-
-        return vector_stops
+        self.add_layer(layer)
 
 
 class ClusteredCircleViz(MapViz):

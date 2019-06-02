@@ -1,0 +1,156 @@
+        
+        {% block clustered_circle %}
+
+        // Add data source
+        map.addSource("data-{{ layerId }}", {
+            "type": "geojson",
+            "data": {{ geojson_data }},
+            "buffer": 0,
+            "maxzoom": {{ clusterMaxZoom }} + 1,
+            "cluster": true,
+            "clusterMaxZoom": {{ clusterMaxZoom }},
+            "clusterRadius": {{ clusterRadius }},
+            "generateId": true
+        });
+        
+        // Add label layer
+        map.addLayer({
+            "id": "label-{{ layerId }}",
+            "source": "data-{{ layerId }}",
+            "type": "symbol",
+            "maxzoom": {{ maxzoom }},
+            "minzoom": {{ minzoom }},
+            "layout": {
+                {% if labelProperty %}
+                    "text-field": "{{ labelProperty }}",
+                {% endif %}
+                "text-size" : generateInterpolateExpression('zoom', [[0, {{ labelSize }}],[22, 3* {{ labelSize }}]] ),
+                "text-offset": [0,-1]
+            },
+            "paint": {
+                "text-halo-color": "{{ labelHaloColor }}",
+                "text-halo-width": generatePropertyExpression('interpolate', 'zoom', [[0,{{ labelHaloWidth }}], [18,5* {{ labelHaloWidth }}]]),
+                "text-color": ["case",
+                    ["boolean", ["feature-state", "hover"], false], 
+                    "{{ highlightColor }}", 
+                    "{{ labelColor }}"]
+            }
+        }, "{{ belowLayer }}");
+        
+        map.addLayer({
+            "id": "circle-cluster-{{ layerId }}",
+            "source": "data-{{ layerId }}",
+            "type": "circle",
+            "maxzoom": {{ maxzoom }},
+            "minzoom": {{ minzoom }},
+            "filter": ["has", "point_count"],
+            "paint": {
+                "circle-color": ["case",
+                    ["boolean", ["feature-state", "hover"], false], 
+                    "{{ highlightColor }}", 
+                    generateInterpolateExpression( "point_count", {{ colorStops }} )],
+                "circle-radius" : generateInterpolateExpression( "point_count", {{ radiusStops }} ),
+                "circle-stroke-color": ["case",
+                    ["boolean", ["feature-state", "hover"], false], 
+                    "{{ highlightColor }}", "{{ strokeColor }}"],
+                "circle-stroke-width": generatePropertyExpression('interpolate', 'zoom', [[0,{{ strokeWidth }}], [18,5* {{ strokeWidth }}]]),
+                "circle-opacity" : {{ opacity }},
+                "circle-stroke-opacity" : {{ opacity }}
+            }
+        }, "label-{{ layerId }}");
+
+        map.addLayer({
+            "id": "circle-unclustered-{{ layerId }}",
+            "source": "data-{{ layerId }}",
+            "type": "circle",
+            "maxzoom": {{ maxzoom }},
+            "minzoom": {{ minzoom }},
+            "filter": ["!has", "point_count"],
+            "paint": {
+                "circle-color": ["case",
+                    ["boolean", ["feature-state", "hover"], false], 
+                    "{{ highlightColor }}", 
+                    "{{ colorDefault }}"],
+                "circle-radius" : generateInterpolateExpression( 'zoom', [[0, {{ radiusDefault }} ], [22,10 * {{ radiusDefault }}]]),
+                "circle-stroke-color": ["case",
+                    ["boolean", ["feature-state", "hover"], false], 
+                    "{{ highlightColor }}", 
+                    "{{ strokeColor }}"],
+                "circle-stroke-width": generatePropertyExpression('interpolate', 'zoom', [[0,{{ strokeWidth }}], [18,5* {{ strokeWidth }}]]),
+                "circle-opacity" : {{ opacity }},
+                "circle-stroke-opacity" : {{ opacity }}
+            }
+        },  "circle-cluster-{{ layerId }}");
+        
+        {% endblock clustered_circle %}
+        
+        // Popups
+        {% if popupOpensOnHover %}
+            var popupAction = 'mousemove',
+                popupSettings =  {
+                    closeButton: false,
+                    closeOnClick: false
+                };
+        {% else %}
+            var popupAction = 'click',
+                popupSettings =  {
+                    closeButton: true,
+                    closeOnClick: true
+                };
+        {% endif %}
+
+        // Create a popup
+        var popup{{ layerId }} = new mapboxgl.Popup(popupSettings);
+
+        {% block clustered_circle_popup %}
+
+        var hoveredStateId{{ layerId }} = 0;
+        
+        // Show the popup on mouseover
+        map.on(popupAction, function(e) {
+            
+            var features = map.queryRenderedFeatures(e.point, {layers: ['circle-unclustered-{{ layerId }}', 'circle-cluster-{{ layerId }}', 'label-{{ layerId }}'] });
+
+            if (features.length > 0) {
+                map.getCanvas().style.cursor = 'pointer';
+                var f = features[0];
+                newHoveredStateId{{ layerId }} = f.id;
+                if (newHoveredStateId{{ layerId }} != hoveredStateId{{ layerId }}) {
+                    map.removeFeatureState({source: 'data-{{ layerId }}', id: hoveredStateId{{ layerId }} });
+                    hoveredStateId{{ layerId }} = newHoveredStateId{{ layerId }};
+                }
+                map.setFeatureState({source: 'data-{{ layerId }}', id: hoveredStateId{{ layerId }} }, { hover: true});
+                let popup_html = '<div><li><b>Location</b>: ' + f.geometry.coordinates[0].toPrecision(6) + 
+                    ', ' + f.geometry.coordinates[1].toPrecision(6) + '</li>';
+
+                for (key in f.properties) {
+                    popup_html += '<li><b> ' + key + '</b>: ' + f.properties[key] + ' </li>'
+                }
+
+                popup_html += '</div>'
+                popup{{ layerId }}.setLngLat(e.lngLat)
+                    .setHTML(popup_html)
+                    .addTo(map);
+            }
+            else {
+                map.getCanvas().style.cursor = '';
+                popup{{ layerId }}.remove();
+                map.removeFeatureState({source: 'data-{{ layerId }}', id: hoveredStateId{{ layerId }}});
+            }
+        });
+
+        {% endblock clustered_circle_popup %}
+        
+        // Fly to on click
+        map.on('click', 'circle-unclustered-{{ layerId }}', function(e) {
+            map.easeTo({
+                center: e.features[0].geometry.coordinates
+            });
+        });
+
+        // Fly to on click
+        map.on('click', 'circle-cluster-{{ layerId }}', function(e) {
+            map.easeTo({
+                center: e.features[0].geometry.coordinates
+            });
+        });

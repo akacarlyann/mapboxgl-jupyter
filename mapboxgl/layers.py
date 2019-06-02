@@ -312,6 +312,7 @@ class HeatmapLayer(MapLayer):
                  intensity_stops=None, 
                  *args, 
                  **kwargs):
+
         super(HeatmapLayer, self).__init__(data, *args, **kwargs)
 
         self.template = 'heatmap_layer'
@@ -362,10 +363,48 @@ class HeatmapLayer(MapLayer):
         return vector_stops
 
 
-# class ClusteredCircleLayer(MapLayer):
+class ClusteredCircleLayer(MapLayer):
 
-#     def __init__(self, *args, **kwargs):
-#         self.below_layer = below_layer
+    def __init__(self, 
+                 data,
+                 color_stops=None,
+                 radius_stops=None,
+                 cluster_radius=30,
+                 cluster_maxzoom=14,
+                 radius_default=2,
+                 color_default='black',
+                 stroke_color='grey',
+                 stroke_width=0.1,
+                 legend_key_shape='circle',
+                 *args,
+                 **kwargs):
+       
+        super(ClusteredCircleLayer, self).__init__(data, *args, **kwargs)
+
+        self.template = 'clustered_circle_layer'
+
+        self.color_stops = color_stops
+        self.radius_stops = radius_stops
+        self.cluster_radius = cluster_radius
+        self.cluster_maxzoom = cluster_maxzoom
+        self.radius_default = radius_default
+        self.color_default = color_default
+        self.stroke_color = stroke_color
+        self.stroke_width = stroke_width
+        self.legend_key_shape = legend_key_shape
+
+    def add_unique_layer_variables(self, options):
+        """Update map template variables specific to a clustered circle visual"""
+        options.update(dict(
+            colorStops=self.color_stops,
+            colorDefault=self.color_default,
+            radiusStops=self.radius_stops,
+            clusterRadius=self.cluster_radius,
+            clusterMaxZoom=self.cluster_maxzoom,
+            strokeWidth=self.stroke_width,
+            strokeColor=self.stroke_color,
+            radiusDefault=self.radius_default,
+        ))
 
 
 # class ChoroplethLayer(MapLayer):

@@ -627,6 +627,16 @@ class ClusteredCircleViz(MapViz):
 
     def __init__(self,
                  data,
+                 vector_url=None,
+                 vector_layer_name=None,
+                 vector_join_property=None,
+                 data_join_property=None,
+                 disable_data_join=False,
+                 below_layer='waterway-label',
+                 opacity=1,
+                 min_zoom=0,
+                 max_zoom=24,
+                 layer_id=None,
                  color_stops=None,
                  radius_stops=None,
                  cluster_radius=30,
@@ -652,34 +662,27 @@ class ClusteredCircleViz(MapViz):
         :param highlight_color: color for feature selection, hover, or highlight
 
         """
-        super(ClusteredCircleViz, self).__init__(data, *args, **kwargs)
+        super(ClusteredCircleViz, self).__init__(*args, **kwargs)
 
-        self.template = 'clustered_circle'
-        self.color_stops = color_stops
-        self.radius_stops = radius_stops
-        self.clusterRadius = cluster_radius
-        self.clusterMaxZoom = cluster_maxzoom
-        self.radius_default = radius_default
-        self.color_default = color_default
-        self.stroke_color = stroke_color
-        self.stroke_width = stroke_width
-        self.color_default = color_default
-        self.legend_key_shape = legend_key_shape
-        self.highlight_color = highlight_color
+        layer = ClusteredCircleLayer(data,
+                                     vector_url=vector_url,
+                                     vector_layer_name=vector_layer_name,
+                                     vector_join_property=vector_join_property,
+                                     data_join_property=data_join_property,
+                                     disable_data_join=disable_data_join,
+                                     color_stops=color_stops,
+                                     radius_stops=radius_stops,
+                                     cluster_radius=cluster_radius,
+                                     cluster_maxzoom=cluster_maxzoom,
+                                     radius_default=radius_default,
+                                     color_default=color_default,
+                                     stroke_color=stroke_color,
+                                     stroke_width=stroke_width,
+                                     legend_key_shape=legend_key_shape,
+                                     highlight_color=highlight_color,
+            )
 
-    def add_unique_template_variables(self, options):
-        """Update map template variables specific to a clustered circle visual"""
-        options.update(dict(
-            colorStops=self.color_stops,
-            colorDefault=self.color_default,
-            radiusStops=self.radius_stops,
-            clusterRadius=self.clusterRadius,
-            clusterMaxZoom=self.clusterMaxZoom,
-            strokeWidth=self.stroke_width,
-            strokeColor=self.stroke_color,
-            radiusDefault=self.radius_default,
-            highlightColor=self.highlight_color
-        ))
+        self.add_layer(layer)
 
 
 class ChoroplethViz(MapViz):

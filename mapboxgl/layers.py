@@ -7,7 +7,7 @@ from IPython.core.display import HTML, display
 import numpy
 import requests
 
-from mapboxgl.errors import TokenError, LegendError
+from mapboxgl.errors import LegendError
 from mapboxgl.utils import color_map, numeric_map, img_encode, geojson_to_dict_list
 from mapboxgl import templates
 
@@ -25,6 +25,8 @@ class VectorMixin(object):
         # loop through features in self.data to create join-data map
         for row in self.data:
             
+            # print(row)
+
             # map color to JSON feature using color_property
             color = color_map(row[self.color_property], self.color_stops, self.color_default)
 
@@ -152,7 +154,11 @@ class MapLayer(object):
             minzoom=self.min_zoom,
             maxzoom=self.max_zoom,
             popupOpensOnHover=self.popup_open_action=='hover',
-        )
+            labelColor=self.label_color,
+            labelSize=self.label_size,
+            labelHaloColor=self.label_halo_color,
+            labelHaloWidth=self.label_halo_width,
+            highlightColor=self.highlight_color)
 
         # add global map options
         options.update(map_options)
@@ -161,14 +167,6 @@ class MapLayer(object):
             options.update(labelProperty=None)
         else:
             options.update(labelProperty='{' + self.label_property + '}')
-
-        options.update(
-            labelColor=self.label_color,
-            labelSize=self.label_size,
-            labelHaloColor=self.label_halo_color,
-            labelHaloWidth=self.label_halo_width,
-            highlightColor=self.highlight_color,
-        )
 
         # vector layer support
         if self.vector_source:
@@ -204,15 +202,12 @@ class CircleLayer(VectorMixin, MapLayer):
                  stroke_color='grey',
                  stroke_width=0.1,
                  legend_key_shape='circle',
-                 highlight_color='black',
                  *args, 
                  **kwargs):
         
         super(CircleLayer, self).__init__(data, *args, **kwargs)
 
         self.template = 'circle_layer'
-        self.check_vector_template()
-
         self.color_property = color_property
         self.color_stops = color_stops
         self.radius = radius
@@ -221,12 +216,10 @@ class CircleLayer(VectorMixin, MapLayer):
         self.color_function_type = color_function_type
         self.color_default = color_default
         self.legend_key_shape = 'circle'
-        self.highlight_color = highlight_color
 
     def add_unique_layer_variables(self, options):
         """Update map template variables specific to circle visual"""
         options.update(dict(
-            geojson_data=json.dumps(self.data, ensure_ascii=False),
             colorProperty=self.color_property,
             colorType=self.color_function_type,
             colorStops=self.color_stops,
@@ -234,20 +227,78 @@ class CircleLayer(VectorMixin, MapLayer):
             strokeColor=self.stroke_color,
             radius=self.radius,
             defaultColor=self.color_default,
-            highlightColor=self.highlight_color,
-            maxzoom=self.max_zoom,
-            minzoom=self.min_zoom,
-            belowLayer=self.below_layer
         ))
-
         if self.vector_source:
             options.update(vectorColorStops=self.generate_vector_color_map())
 
 
-# class GraduatedCircleLayer(MapLayer):
+class GraduatedCircleLayer(MapLayer):
 
-#     def __init__(self, *args, **kwargs):
-#         self.below_layer = below_layer
+    def __init__(self,
+                 data,
+                 color_property=None,
+                 color_stops=None,
+                 color_default='grey',
+                 color_function_type='interpolate',
+                 stroke_color='grey',
+                 stroke_width=0.1,
+                 radius_property=None,
+                 radius_stops=None,
+                 radius_default=2,
+                 radius_function_type='interpolate',
+                 legend_key_shape='circle',
+                 *args,
+                 **kwargs):
+        """
+        Construct a GraduatedCircleLayer object
+
+        :param data: GeoJSON Feature Collection
+        :param color_default: property to determine default circle color if match lookup fails
+        :param color_function_type: property to determine `type` used by Mapbox to assign color
+        :param color_property: property to determine circle color
+        :param color_stops: property to determine circle color
+        :param radius_default: property to determine default circle radius if match lookup fails
+        :param radius_function_type: property to determine `type` used by Mapbox to assign radius size
+        :param radius_property: property to determine circle radius
+        :param radius_stops: property to determine circle radius
+        :param stroke_color: color of circle stroke outline
+        :param stroke_width: with of circle stroke outline
+        """
+        super(GraduatedCircleLayer, self).__init__(data, *args, **kwargs)
+
+        self.template = 'graduated_circle_layer'
+        self.color_default = color_default
+        self.color_function_type = color_function_type
+        self.color_property = color_property
+        self.color_stops = color_stops
+        self.legend_key_shape = legend_key_shape
+        self.radius_property = radius_property
+        self.radius_stops = radius_stops
+        self.radius_default = radius_default
+        self.radius_function_type = radius_function_type
+        self.stroke_color = stroke_color
+        self.stroke_width = stroke_width
+
+    def add_unique_layer_variables(self, options):
+        """
+        Update map template variables specific to graduated circle visual
+        """
+        options.update(dict(
+            colorProperty=self.color_property,
+            colorStops=self.color_stops,
+            colorType=self.color_function_type,
+            radiusType=self.radius_function_type,
+            defaultColor=self.color_default,
+            defaultRadius=self.radius_default,
+            radiusProperty=self.radius_property,
+            radiusStops=self.radius_stops,
+            strokeWidth=self.stroke_width,
+            strokeColor=self.stroke_color,
+        ))
+        if self.vector_source:
+            options.update(dict(
+                vectorColorStops=self.generate_vector_color_map(),
+                vectorRadiusStops=self.generate_vector_numeric_map('radius')))
 
 
 # class HeatmapLayer(MapLayer):

@@ -1,0 +1,152 @@
+        
+        {% block choropleth %}
+
+        // Add geojson data source
+        map.addSource("data-{{ layerId }}", {
+            "type": "geojson",
+            "data": {{ geojson_data }},
+            "buffer": 1,
+            "maxzoom": 14,
+            "generateId": true
+        });
+
+        // Add data layer
+        map.addLayer({
+            "id": "choropleth-fill-{{ layerId }}",
+            "source": "data-{{ layerId }}",
+            "type": "fill",
+            "paint": {
+                "fill-color": ["case",
+                    ["boolean", ["feature-state", "hover"], false], 
+                    "{{ highlightColor }}",
+                    generatePropertyExpression("{{ colorType }}", "{{ colorProperty }}", {{ colorStops }}, "{{ defaultColor }}")],
+                "fill-opacity": {{ opacity }}
+            }
+        }, "{{ belowLayer }}" );
+
+        // Add border layer
+        map.addLayer({
+            "id": "choropleth-line-{{ layerId }}",
+            "source": "data-{{ layerId }}",
+            "type": "line",
+            "layout": {
+                "line-join": "round",
+                "line-cap": "round"
+            },
+            "paint": {
+                {% if lineDashArray %}
+                "line-dasharray": {{ lineDashArray }},
+                {% endif %}
+                "line-color": ["case",
+                    ["boolean", ["feature-state", "hover"], false], 
+                    "{{ highlightColor }}",
+                    "{{ lineColor }}"],
+                "line-width": {{ lineWidth }},
+                "line-opacity": {{ lineOpacity }}
+            }
+        }, "{{ belowLayer }}" );
+
+        // Add label layer
+        map.addLayer({
+            "id": "choropleth-label-{{ layerId }}",
+            "source": "data-{{ layerId }}",
+            "type": "symbol",
+            "layout": {
+                {% if labelProperty %}
+                "text-field": "{{ labelProperty }}",
+                {% endif %}
+                "text-size" : generateInterpolateExpression('zoom', [[0, {{ labelSize }}],[22, 3* {{ labelSize }}]] ),
+                "text-offset": [0,-1]
+            },
+            "paint": {
+                "text-halo-color": "{{ labelHaloColor }}",
+                "text-halo-width": generatePropertyExpression('interpolate', 'zoom', [[0,{{ labelHaloWidth }}], [18,5* {{ labelHaloWidth }}]]),
+                "text-color": ["case",
+                    ["boolean", ["feature-state", "hover"], false], 
+                    "{{ highlightColor }}", "{{ labelColor }}"]
+            }
+        }, "{{ belowLayer }}" );
+
+        // Optional extrusion layer
+        {% if extrudeChoropleth %}
+
+            map.addLayer({
+                id: "choropleth-extrusion-{{ layerId }}",
+                type: "fill-extrusion-{{ layerId }}",            
+                source: "data-{{ layerId }}",
+                paint: {
+                    "fill-extrusion-opacity": {{ opacity }},
+                    "fill-extrusion-color": ["case",
+                        ["boolean", ["feature-state", "hover"], false], 
+                        "{{ highlightColor }}",
+                        generatePropertyExpression("{{ colorType }}", "{{ colorProperty }}", {{ colorStops }}, "{{ defaultColor }}")],
+                    "fill-extrusion-height": generatePropertyExpression("{{ heightType }}", "{{ heightProperty }}", {{ heightStops }}, {{ defaultHeight }}),
+                }
+            }, "{{ belowLayer }}");
+
+        {% endif %}
+
+        {% endblock choropleth %}
+
+        // Popups
+        var interactionLayer{{ layerId }} = {% if extrudeChoropleth %} 'choropleth-extrusion-{{ layerId }}' {% else %} 'choropleth-fill-{{ layerId }}' {% endif %};
+        {% if popupOpensOnHover %}
+            var popupAction = 'mousemove',
+                popupSettings =  {
+                    closeButton: false,
+                    closeOnClick: false
+                };
+        {% else %}
+            var popupAction = 'click',
+                popupSettings =  {
+                    closeButton: true,
+                    closeOnClick: true
+                };
+        {% endif %}
+
+        // Create a popup
+        var popup{{ layerId }} = new mapboxgl.Popup(popupSettings);
+        
+        {% block choropleth_popup %}
+
+        // Show the popup on mouseover
+        var hoveredStateId{{ layerId }} = 0;
+
+        map.on(popupAction, function(e) {
+            var features = map.queryRenderedFeatures(e.point, {layers: [interactionLayer{{ layerId }}, 'choropleth-label-{{ layerId }}'] });
+
+            if (features.length > 0) {
+                map.getCanvas().style.cursor = 'pointer';
+                var f = features[0];
+                newHoveredStateId{{ layerId }} = f.id;
+                if (newHoveredStateId{{ layerId }} != hoveredStateId{{ layerId }}) {
+                    map.removeFeatureState({source: 'data-{{ layerId }}', id: hoveredStateId{{ layerId }}});
+                    hoveredStateId{{ layerId }} = newHoveredStateId{{ layerId }};
+                }
+                map.setFeatureState({source: 'data-{{ layerId }}', id: hoveredStateId{{ layerId }}}, { hover: true});
+                let popup_html = '<div>';
+
+                for (key in f.properties) {
+                    popup_html += '<li><b> ' + key + '</b>: ' + f.properties[key] + ' </li>'
+                }
+
+                popup_html += '</div>'
+                popup{{ layerId }}.setLngLat(e.lngLat)
+                    .setHTML(popup_html)
+                    .addTo(map);
+            }
+            else {
+                map.getCanvas().style.cursor = '';
+                popup{{ layerId }}.remove();
+                map.removeFeatureState({source: 'data-{{ layerId }}', id: hoveredStateId{{ layerId }}});
+            }
+        });
+
+        {% endblock choropleth_popup %}
+        
+        // Fly to selected feature on click
+        map.on('click', interactionLayer{{ layerId }}, function(e) {
+            map.easeTo({
+                center: e.lngLat
+            });
+        });

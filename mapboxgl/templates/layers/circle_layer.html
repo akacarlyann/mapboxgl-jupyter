@@ -1,4 +1,13 @@
+
+
+
+        {% if colorStops and colorProperty %}
+            calcColorLegend({{ colorStops }} , "{{ colorProperty }}");
+        {% endif %}
         
+
+
+        <!-- Add Layer, Labels and Popups -->
         {% block circle %}
 
         // Add data source

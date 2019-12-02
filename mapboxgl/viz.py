@@ -4,12 +4,7 @@ import os
 
 from IPython.core.display import HTML, display
 
-import numpy
-
-from mapboxgl.errors import TokenError, LegendError
-from mapboxgl.utils import color_map, numeric_map, img_encode, geojson_to_dict_list
-from mapboxgl import templates
-
+from mapboxgl import errors, templates
 from mapboxgl.layers import *
 
 GL_JS_VERSION = 'v1.0.0'
@@ -60,9 +55,9 @@ class MapViz(object):
         if access_token is None:
             access_token = os.environ.get('MAPBOX_ACCESS_TOKEN', '')
         if access_token.startswith('sk'):
-            raise TokenError('Mapbox access token must be public (pk), not secret (sk). ' \
-                             'Please sign up at https://www.mapbox.com/signup/ to get a public token. ' \
-                             'If you already have an account, you can retreive your token at https://www.mapbox.com/account/.')
+            raise errors.TokenError('Mapbox access token must be public (pk), not secret (sk). ' \
+                                    'Please sign up at https://www.mapbox.com/signup/ to get a public token. ' \
+                                    'If you already have an account, you can retreive your token at https://www.mapbox.com/account/.')
         self.access_token = access_token
 
         self.template = 'map'
@@ -165,8 +160,8 @@ class MapViz(object):
         if self.legend:
 
             if all([self.legend, self.legend_gradient, self.legend_function == 'radius']):
-                raise LegendError(' '.join(['Gradient legend format not compatible with a variable radius legend.',
-                                            'Please either change `legend_gradient` to False or `legend_function` to "color".']))
+                raise errors.LegendError(' '.join(['Gradient legend format not compatible with a variable radius legend.',
+                                                   'Please either change `legend_gradient` to False or `legend_function` to "color".']))
 
             options.update(
                 showLegend=self.legend,
@@ -710,6 +705,13 @@ class ChoroplethViz(MapViz):
                  height_function_type='interpolate',
                  legend_key_shape='rounded-square',
                  highlight_color='black',
+                 below_layer='waterway-label',
+                 opacity=1,
+                 min_zoom=0,
+                 max_zoom=24,
+                 layer_id=None,
+                 popup_open_action='hover',
+                 legend=False,                
                  *args,
                  **kwargs):
         """Construct a Mapviz object
@@ -733,7 +735,7 @@ class ChoroplethViz(MapViz):
         :param height_function_type: property to determine `type` used by Mapbox to assign height
         :param highlight_color: color for feature selection, hover, or highlight
         """
-        super(ChoroplethViz, self).__init__(data, *args, **kwargs)
+        super(ChoroplethViz, self).__init__(*args, **kwargs)
         
         layer = ChoroplethLayer(data,
                                 vector_url=vector_url,
@@ -754,7 +756,14 @@ class ChoroplethViz(MapViz):
                                 height_default=height_default,
                                 height_function_type=height_function_type,
                                 legend_key_shape=legend_key_shape,
-                                highlight_color=highlight_color)
+                                highlight_color=highlight_color,
+                                below_layer=below_layer,
+                                opacity=opacity,
+                                min_zoom=min_zoom,
+                                max_zoom=max_zoom,
+                                layer_id=layer_id,
+                                popup_open_action=popup_open_action,
+                                legend=legend)
 
         self.add_layer(layer)
 

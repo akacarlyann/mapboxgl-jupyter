@@ -136,6 +136,8 @@ class MapLayer(object):
         self.layer_id = layer_id
         self.popup_open_action = popup_open_action
 
+        self.legend = legend
+
     def create_layer_html(self, map_options):
 
         # layer info
@@ -214,7 +216,7 @@ class CircleLayer(VectorMixin, MapLayer):
         self.stroke_width = stroke_width
         self.color_function_type = color_function_type
         self.color_default = color_default
-        self.legend_key_shape = 'circle'
+        self.legend_key_shape = legend_key_shape
 
     def add_unique_layer_variables(self, options):
         """Update map template variables specific to circle visual"""

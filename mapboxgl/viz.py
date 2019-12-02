@@ -47,16 +47,13 @@ class MapViz(object):
         :param scale: add map control showing current scale of map
         :param add_snapshot_links: boolean switch for adding buttons to download screen captures of map or legend
         """
-        if access_token is None:
-            access_token = os.environ.get('MAPBOX_ACCESS_TOKEN', '')
-        if access_token.startswith('sk'):
-            raise errors.TokenError('Mapbox access token must be public (pk), not secret (sk). ' \
-                                    'Please sign up at https://www.mapbox.com/signup/ to get a public token. ' \
-                                    'If you already have an account, you can retreive your token at https://www.mapbox.com/account/.')
-        self.access_token = access_token
+        # set the Mapbox GL access token
+        self.access_token = self.set_access_token(access_token)
 
+        # default HTML template
         self.template = 'map'
 
+        # map configuration
         self.div_id = div_id
         self.width = width
         self.height = height
@@ -83,6 +80,22 @@ class MapViz(object):
         # layers configuration
         self.layers = {}
         self.layer_id_counter = 0
+
+    def set_access_token(self, access_token):
+        """
+        Set the Mapbox access token from an environment variable if 
+        not explicitly provided
+
+        :param access_token: Mapbox GL JS access token.
+        """
+        if access_token is None:
+            access_token = os.environ.get('MAPBOX_ACCESS_TOKEN', '')
+        if access_token.startswith('sk'):
+            raise errors.TokenError('Mapbox access token must be public (pk), not secret (sk). ' \
+                                    'Please sign up at https://www.mapbox.com/signup/ to get a public token. ' \
+                                    'If you already have an account, you can retreive your token at ' \
+                                    'https://www.mapbox.com/account/.')
+        return access_token
 
     def as_iframe(self, html_data):
         """Build the HTML representation for the mapviz."""
@@ -126,11 +139,11 @@ class MapViz(object):
             scrollZoomOn=json.dumps(self.scroll_zoom_on),
             touchZoomOn=json.dumps(self.touch_zoom_on),
             showScale=self.scale,
-            includeSnapshotLinks=self.add_snapshot_links,
-            preserveDrawingBuffer=json.dumps(False),
-            showLegend=self.legend,
+            showLegend=False,
             legendGradient=json.dumps(False),
             legendKeyBordersOn=json.dumps(False),
+            includeSnapshotLinks=self.add_snapshot_links,
+            preserveDrawingBuffer=json.dumps(False),
             layersHtml=''
         )
 
@@ -153,8 +166,10 @@ class MapViz(object):
         if self.legend:
 
             if all([self.legend, self.legend_gradient, self.legend_function == 'radius']):
-                raise errors.LegendError(' '.join(['Gradient legend format not compatible with a variable radius legend.',
-                                                   'Please either change `legend_gradient` to False or `legend_function` to "color".']))
+                raise errors.LegendError(' '.join(['Gradient legend format not compatible with',
+                                                   'a variable radius legend. Please either ',
+                                                   'change `legend_gradient` to False or', 
+                                                   '`legend_function` to "color".']))
 
             options.update(
                 showLegend=self.legend,
@@ -203,7 +218,7 @@ class MapViz(object):
             self.legend_text_color = map_legend_object.legend_text_color
             self.legend_text_numeric_precision = map_legend_object.legend_text_numeric_precision
             self.legend_title_halo_color = map_legend_object.legend_title_halo_color
-            if not self.legend_key_shape:
+            if not hasattr(self, 'legend_key_shape'):
                 self.legend_key_shape = map_legend_object.legend_key_shape
             self.legend_key_borders_on = map_legend_object.legend_key_borders_on
 
@@ -412,7 +427,6 @@ class CircleViz(MapViz):
                  color_function_type='interpolate',
                  stroke_color='grey',
                  stroke_width=0.1,
-                 legend_key_shape='circle',
                  below_layer='waterway-label',
                  opacity=1,
                  label_property=None,
@@ -426,6 +440,7 @@ class CircleViz(MapViz):
                  layer_id=None,
                  popup_open_action='hover',
                  legend=False,
+                 legend_key_shape='circle',
                  *args,
                  **kwargs):
         """
@@ -456,7 +471,6 @@ class CircleViz(MapViz):
                             stroke_width=stroke_width,
                             color_function_type=color_function_type,
                             color_default=color_default,
-                            legend_key_shape=legend_key_shape,
                             highlight_color=highlight_color,
                             below_layer=below_layer,
                             opacity=opacity,
@@ -469,9 +483,12 @@ class CircleViz(MapViz):
                             max_zoom=max_zoom,
                             layer_id=layer_id,
                             popup_open_action=popup_open_action,
-                            legend=legend)
+                            legend=legend,
+                            legend_key_shape=legend_key_shape)
 
         self.add_layer(layer)
+
+        self.add_legend(MapLegend(legend_key_shape=legend_key_shape))
 
 
 class GraduatedCircleViz(MapViz):

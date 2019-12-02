@@ -15,8 +15,8 @@
     body { margin:0; padding:0; }
     .map { position: absolute; top:0; bottom:0; width:100%; }
     .legend {
-        background-color: {{ legendFill|default("black") }};
-        color: {{ legendTextColor|default("black") }};
+        /*background-color: {{ legendFill|default("white") }};*/
+        /*color: {{ legendTextColor|default("black") }};*/
         border-radius: 3px;
         bottom: 10px;
         box-shadow: 0 1px 2px rgba(0, 0, 0, 0.10);
@@ -30,10 +30,13 @@
    .legend.horizontal {bottom: 10px; text-align: left;}
 
     /* legend header */
-    .legend .legend-header { border-radius: 3px 3px 0 0; background: {{ legendHeaderFill|default("black") }}; }
+    .legend .legend-header { 
+        border-radius: 3px 3px 0 0; 
+        /*background: {{ legendHeaderFill|default("black") }}; */
+    }
     .legend .legend-title {
         padding: 6px 12px 6px 12px;
-        text-shadow: 0 0 2px {{ legendTitleHaloColor|default("black") }};
+        /*text-shadow: 0 0 2px {{ legendTitleHaloColor|default("black") }};*/
         text-transform: capitalize;
         text-align: center;
         font-weight: bold !important;
@@ -62,6 +65,10 @@
     .legend.horizontal .legend-key.line {margin-left: 5px;}
     .legend.horizontal .legend-key.line, .legend.vertical .legend-key.line {border-radius: 10%; width: 20px; height: 3px; margin-bottom: 2px;}
 
+    .bordered { border-style: solid;
+                border-width: 1px;
+                border-color: #121212; }
+
     /* gradient bar alignment */
     .gradient-bar {margin: 6px 12px 6px 12px;}
     .legend.horizontal .gradient-bar {width: 88%; height: 10px;}
@@ -76,10 +83,6 @@
     .legend.horizontal.legend-variable-radius ul.legend-content li.legend-item .legend-value,
     .legend.horizontal.legend-variable-radius ul.legend-content li.legend-item {width: 30px; min-height: 20px;}
 
-    /* scale annotation */
-    .mapboxgl-ctrl.mapboxgl-ctrl-scale { border-color: {{ scaleBorderColor|default("black") }}; 
-                                         background-color: {{ scaleFillColor|default("white") }}; 
-                                         color: {{ scaleTextColor|default("#131516") }}; }
 </style>
 
 {% block extra_css %}{% endblock extra_css %}
@@ -195,7 +198,7 @@ function calcColorLegend(myColorStops, title) {
         }
     }
     // update right-margin for compact Mapbox attribution based on calculated legend width
-    updateAttribMargin(legend);
+    updateAttribMargin(legend, '{{ legendLayout|default("vertical") }}');
     updateLegendMargin(legend);
 }
 
@@ -280,23 +283,23 @@ function calcRadiusLegend(myRadiusStops, title, color) {
     }
 
     // update right-margin for compact Mapbox attribution based on calculated legend width
-    updateAttribMargin(legend);
+    updateAttribMargin(legend, '{{ legendLayout|default("vertical") }}');
     updateLegendMargin(legend);
 
 }
 
 
-function updateAttribMargin(legend) {
+function updateAttribMargin(legend, legendLayout) {
 
     // default margin is based on calculated legend width
     var attribMargin = legend.offsetWidth + 15;
     
     // if horizontal legend layout (multiple legends are stacked vertically)
-    if ('{{ legendLayout|default("vertical") }}' === 'horizontal') {
+    if (legendLayout === 'horizontal') {
         document.getElementsByClassName('mapboxgl-ctrl-attrib')[0].style.marginRight = (attribMargin).toString() + 'px';
     }
     // vertical legend layout means multiple legends are side-by-side
-    else if ('{{ legendLayout|default("vertical") }}' === 'vertical') {
+    else if (legendLayout === 'vertical') {
         var currentMargin = Number(document.getElementsByClassName('mapboxgl-ctrl-attrib')[0].style.marginRight.replace('px', ''));
         document.getElementsByClassName('mapboxgl-ctrl-attrib')[0].style.marginRight = (attribMargin + currentMargin).toString() + 'px';
     }
@@ -367,6 +370,44 @@ function generatePropertyExpression(expressionType, propertyValue, stops, defaul
     }
 
     return expression
+}
+
+
+function updateLegendKeyBorders(borderColor, borderWidth) {
+    var objects = document.getElementsByClassName('bordered');
+    for (var i=0; i < objects.length; i++) {
+        objects[i].style.borderColor = borderColor;
+        objects[i].style.borderWidth = borderWidth;
+    }
+}
+
+
+function updateLegendTheme(legendFill, legendTextColor, legendHeaderFill, legendTitleHaloColor) {
+    var objects = document.getElementsByClassName('legend');
+    for (var i=0; i < objects.length; i++) {
+        objects[i].style.backgroundColor = legendFill;
+        objects[i].style.color = legendTextColor;
+    }
+
+    var objects = document.getElementsByClassName('legend-header');
+    for (var i=0; i < objects.length; i++) {
+        objects[i].style.background = legendHeaderFill;
+    }
+
+    var objects = document.getElementsByClassName('legend-title');
+    for (var i=0; i < objects.length; i++) {
+        objects[i].style.textShadow = '0 0 2px ' + legendTitleHaloColor;
+    }
+}
+
+
+function updateScaleBarTheme(scaleBorderColor, scaleFillColor, scaleTextColor) {
+    var objects = document.getElementsByClassName('mapboxgl-ctrl mapboxgl-ctrl-scale');
+    for (var i=0; i < objects.length; i++) {
+        objects[i].style.borderColor = scaleBorderColor;
+        objects[i].style.backgroundColor = scaleFillColor;
+        objects[i].style.color = scaleTextColor;
+    }
 }
 
 </script>

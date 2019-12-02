@@ -47,8 +47,12 @@
         
         {% if showScale %}
         
-            map.addControl(new mapboxgl.ScaleControl({ unit: '{{ scaleUnits }}' }), '{{ scalePosition }}');
-        
+            map.addControl(new mapboxgl.ScaleControl({ unit: "{{ scaleUnits }}" }), "{{ scalePosition }}");
+            
+            updateScaleBarTheme("{{ scaleBorderColor|default("black") }}", 
+                                "{{ scaleFillColor|default("white") }}", 
+                                "{{ scaleTextColor|default("#131516") }}" );
+
         {% endif %}
 
     {% endblock scale %}

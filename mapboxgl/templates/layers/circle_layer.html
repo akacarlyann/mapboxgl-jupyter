@@ -1,5 +1,20 @@
 
-        <!-- Add Layer, Labels and Popups -->
+        {% block legend %}
+
+            {% if showLegend %}
+                {% if colorStops and colorProperty %}
+                    calcColorLegend({{ colorStops }}, "{{ colorProperty }}");
+                    updateLegendTheme("{{ legendFill|default("white") }}",
+                                      "{{ legendTextColor|default("black") }}",
+                                      "{{ legendHeaderFill|default("white") }}",
+                                      "{{ legendTitleHaloColor|default("black") }}");
+                    
+                    setTimeout(function(){ updateLegendKeyBorders("{{ strokeColor }}", {{ strokeWidth }}); }, 1000);
+                {% endif %}
+            {% endif %}
+                
+        {% endblock legend %}
+
         {% block circle %}
 
         // Add data source

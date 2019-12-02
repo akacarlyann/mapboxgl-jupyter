@@ -437,6 +437,7 @@ class CircleViz(MapViz):
                  max_zoom=24,
                  layer_id=None,
                  popup_open_action='hover',
+                 legend=False,
                  *args,
                  **kwargs):
         """
@@ -479,7 +480,8 @@ class CircleViz(MapViz):
                             min_zoom=min_zoom,
                             max_zoom=max_zoom,
                             layer_id=layer_id,
-                            popup_open_action=popup_open_action)
+                            popup_open_action=popup_open_action,
+                            legend=legend)
 
         self.add_layer(layer)
 
@@ -846,6 +848,13 @@ class LinestringViz(MapViz):
                  line_width_function_type='interpolate',
                  legend_key_shape='line',
                  highlight_color='black',
+                 below_layer='waterway-label',
+                 opacity=1,
+                 min_zoom=0,
+                 max_zoom=24,
+                 layer_id=None,
+                 popup_open_action='hover',
+                 legend=False,
                  *args,
                  **kwargs):
         """Construct a Mapviz object
@@ -866,8 +875,8 @@ class LinestringViz(MapViz):
         :param line_width_function_type: property to determine `type` used by Mapbox to assign line width
         :param highlight_color: color for feature selection, hover, or highlight
         """
-        super(LinestringViz, self).__init__(data, *args, **kwargs)
-        
+        super(LinestringViz, self).__init__(*args, **kwargs)
+
         layer = LinestringLayer(data,
                                 vector_url=vector_url,
                                 vector_layer_name=vector_layer_name,
@@ -884,6 +893,13 @@ class LinestringViz(MapViz):
                                 line_width_default=line_width_default,
                                 line_width_function_type=line_width_function_type,
                                 legend_key_shape=legend_key_shape,
-                                highlight_color=highlight_color)
+                                highlight_color=highlight_color,
+                                below_layer=below_layer,
+                                opacity=opacity,
+                                min_zoom=min_zoom,
+                                max_zoom=max_zoom,
+                                layer_id=layer_id,
+                                popup_open_action=popup_open_action,
+                                legend=legend)
 
         self.add_layer(layer)

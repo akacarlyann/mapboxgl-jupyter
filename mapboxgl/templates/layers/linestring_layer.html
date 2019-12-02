@@ -1,23 +1,5 @@
-
-        {% block legend %}
-
-            {% if colorStops and colorProperty and widthProperty %}
-                
-                {% if colorProperty != widthProperty %}
-                    calcColorLegend({{ colorStops }}, "{{ colorProperty }} vs. {{ widthProperty }}", "{{ layerId }}", "{{ legendKeyShape }}", "{{ legendLayout }}", {{ legendGradient|safe }}, {{ legendNumericPrecision|default(0) }}, {{ legendKeyBordersOn|safe }});
-                {% else %}
-                    calcColorLegend({{ colorStops }}, "{{ colorProperty }}", "{{ layerId }}", "{{ legendKeyShape }}", "{{ legendLayout }}", {{ legendGradient|safe }}, {{ legendNumericPrecision|default(0) }}, {{ legendKeyBordersOn|safe }});
-                {% endif %}
-
-            {% elif colorStops and colorProperty %}
-
-                calcColorLegend({{ colorStops }}, "{{ colorProperty }}", "{{ layerId }}", "{{ legendKeyShape }}", "{{ legendLayout }}", {{ legendGradient|safe }}, {{ legendNumericPrecision|default(0) }}, {{ legendKeyBordersOn|safe }});
-
-            {% endif %}
-
-        {% endblock legend %}
-
         
+        <!-- Add Layer, Labels and Popups -->
         {% block linestring %}
 
         // Add geojson data source
@@ -107,7 +89,9 @@
 
         var hoveredStateId{{ layerId }} = 0;
 
+        // Show the popup on action
         map.on(popupAction, function(e) {
+
             var features = map.queryRenderedFeatures(e.point, {layers: ['linestring-{{ layerId }}', 'linestring-label-{{ layerId }}'] });
 
             if (features.length > 0) {

@@ -426,7 +426,6 @@ class ChoroplethLayer(VectorMixin, MapLayer):
                  height_default=0.0,
                  height_function_type='interpolate',
                  legend_key_shape='rounded-square',
-                 highlight_color='black',
                  *args,
                  **kwargs):
 
@@ -451,7 +450,6 @@ class ChoroplethLayer(VectorMixin, MapLayer):
         self.height_default = height_default
         self.height_function_type = height_function_type
         self.legend_key_shape = legend_key_shape
-        self.highlight_color = highlight_color
 
     def add_unique_layer_variables(self, options):
         """Update map template variables specific to choropleth visual"""
@@ -591,7 +589,7 @@ class LinestringLayer(VectorMixin, MapLayer):
                  *args,
                  **kwargs):
         """
-        Construct a Mapviz object
+        Construct a LinestringLayer object
 
         :param data: can be either GeoJSON (containing polygon features) or JSON for data-join technique with vector polygons
         :param color_property: property to determine line color
@@ -603,7 +601,6 @@ class LinestringLayer(VectorMixin, MapLayer):
         :param line_width_stops: property to determine line width
         :param line_width_default: property to determine default line width if match lookup fails
         :param line_width_function_type: property to determine `type` used by Mapbox to assign line width
-        :param highlight_color: color for feature selection, hover, or highlight
         """
 
         super(LinestringLayer, self).__init__(data, *args, **kwargs)
@@ -621,7 +618,6 @@ class LinestringLayer(VectorMixin, MapLayer):
         self.line_width_default = line_width_default
         self.line_width_function_type = line_width_function_type
         self.legend_key_shape = legend_key_shape
-        self.highlight_color = highlight_color
 
     def add_unique_layer_variables(self, options):
         """Update map template variables specific to linestring visual"""

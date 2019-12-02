@@ -1,0 +1,17 @@
+        {% block legend %}
+
+            {% if colorStops and colorProperty and widthProperty %}
+                
+                {% if colorProperty != widthProperty %}
+                    calcColorLegend({{ colorStops }}, "{{ colorProperty }} vs. {{ widthProperty }}", "{{ layerId }}", "{{ legendKeyShape }}", "{{ legendLayout }}", {{ legendGradient|safe }}, {{ legendNumericPrecision|default(0) }}, {{ legendKeyBordersOn|safe }});
+                {% else %}
+                    calcColorLegend({{ colorStops }}, "{{ colorProperty }}", "{{ layerId }}", "{{ legendKeyShape }}", "{{ legendLayout }}", {{ legendGradient|safe }}, {{ legendNumericPrecision|default(0) }}, {{ legendKeyBordersOn|safe }});
+                {% endif %}
+
+            {% elif colorStops and colorProperty %}
+
+                calcColorLegend({{ colorStops }}, "{{ colorProperty }}", "{{ layerId }}", "{{ legendKeyShape }}", "{{ legendLayout }}", {{ legendGradient|safe }}, {{ legendNumericPrecision|default(0) }}, {{ legendKeyBordersOn|safe }});
+
+            {% endif %}
+
+        {% endblock legend %}

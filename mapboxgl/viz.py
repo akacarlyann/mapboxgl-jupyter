@@ -26,10 +26,8 @@ class MapViz(object):
                  double_click_zoom_on=True,
                  scroll_zoom_on=True,
                  touch_zoom_on=True,
-                 legend=False,
                  scale=False,
-                 add_snapshot_links=False,
-                 popup_open_action='hover'):
+                 add_snapshot_links=False):
         """
         Construct a MapViz object
 
@@ -46,11 +44,8 @@ class MapViz(object):
         :param double_click_zoom_on: boolean indicating if map can be zoomed with double-click
         :param scroll_zoom_on: boolean indicating if map can be zoomed with the scroll wheel
         :param touch_zoom_on: boolean indicating if map can be zoomed with two-finger touch gestures
-        :param popup_open_action: controls behavior of opening and closing feature popups; one of 'hover' or 'click'
-        :param legend: boolean for whether to show legend on map
         :param scale: add map control showing current scale of map
         :param add_snapshot_links: boolean switch for adding buttons to download screen captures of map or legend
-
         """
         if access_token is None:
             access_token = os.environ.get('MAPBOX_ACCESS_TOKEN', '')
@@ -74,7 +69,6 @@ class MapViz(object):
         self.double_click_zoom_on = double_click_zoom_on
         self.scroll_zoom_on = scroll_zoom_on
         self.touch_zoom_on = touch_zoom_on
-        self.popup_open_action = popup_open_action
 
         # legend configuration
         self.legend = False
@@ -131,7 +125,6 @@ class MapViz(object):
             doubleClickZoomOn=json.dumps(self.double_click_zoom_on),
             scrollZoomOn=json.dumps(self.scroll_zoom_on),
             touchZoomOn=json.dumps(self.touch_zoom_on),
-            popupOpensOnHover=self.popup_open_action=='hover',
             showScale=self.scale,
             includeSnapshotLinks=self.add_snapshot_links,
             preserveDrawingBuffer=json.dumps(False),
@@ -142,20 +135,20 @@ class MapViz(object):
         )
 
         if self.add_snapshot_links:
-            options.update(dict(
+            options.update(
                 includeSnapshotLinks=self.add_snapshot_links,
                 preserveDrawingBuffer=json.dumps(self.add_snapshot_links),
-            ))
+            )
 
         if self.scale:
-            options.update(dict(
+            options.update(
                 showScale=self.scale,
                 scaleUnits=self.scale_unit_system,
                 scaleBorderColor=self.scale_border_color,
                 scalePosition=self.scale_position,
                 scaleFillColor=self.scale_background_color,
                 scaleTextColor=self.scale_text_color,
-        ))
+            )
 
         if self.legend:
 
@@ -812,6 +805,7 @@ class RasterTilesViz(MapViz):
                  tiles_minzoom=0,
                  tiles_maxzoom=22,
                  legend=False,
+                 below_layer='waterway-label',
                  *args,
                  **kwargs):
         """Construct a Mapviz object
@@ -831,7 +825,8 @@ class RasterTilesViz(MapViz):
                                  tiles_bounds=tiles_bounds,
                                  tiles_minzoom=tiles_minzoom,
                                  tiles_maxzoom=tiles_maxzoom,
-                                 legend=legend)
+                                 legend=legend,
+                                 below_layer=below_layer)
 
         self.add_layer(layer)
 

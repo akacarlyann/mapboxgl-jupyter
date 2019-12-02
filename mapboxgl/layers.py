@@ -105,6 +105,7 @@ class MapLayer(object):
         :param min_zoom: min zoom for layer visibility
         :param max_zoom: max zoom for layer visibility
         :param popup_open_action: controls behavior of opening and closing feature popups; one of 'hover' or 'click'
+        :param legend: boolean for whether to show legend on map
         """
 
         self.data = data
@@ -539,6 +540,7 @@ class RasterTilesLayer(MapLayer):
                  tiles_minzoom=0,
                  tiles_maxzoom=22,
                  legend=False,
+                 below_layer='null',
                  *args, 
                  **kwargs):
         """
@@ -560,7 +562,8 @@ class RasterTilesLayer(MapLayer):
         self.tiles_bounds = tiles_bounds
         self.tiles_minzoom = tiles_minzoom
         self.tiles_maxzoom = tiles_maxzoom
-   
+        self.below_layer = below_layer
+
     def add_unique_layer_variables(self, options):
         """Update map template variables specific to a raster visual"""
         options.update(dict(
@@ -568,7 +571,8 @@ class RasterTilesLayer(MapLayer):
             tiles_size=self.tiles_size,
             tiles_minzoom=self.tiles_minzoom,
             tiles_maxzoom=self.tiles_maxzoom,
-            tiles_bounds=self.tiles_bounds if self.tiles_bounds else 'undefined'))
+            tiles_bounds=self.tiles_bounds if self.tiles_bounds else 'undefined'),
+            below_layer=json.dumps(self.below_layer))
 
 
 class LinestringLayer(VectorMixin, MapLayer):

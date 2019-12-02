@@ -679,8 +679,7 @@ class ClusteredCircleViz(MapViz):
                                      stroke_color=stroke_color,
                                      stroke_width=stroke_width,
                                      legend_key_shape=legend_key_shape,
-                                     highlight_color=highlight_color,
-            )
+                                     highlight_color=highlight_color)
 
         self.add_layer(layer)
 
@@ -690,6 +689,11 @@ class ChoroplethViz(MapViz):
 
     def __init__(self,
                  data,
+                 vector_url=None,
+                 vector_layer_name=None,
+                 vector_join_property=None,
+                 data_join_property=None,
+                 disable_data_join=False,
                  color_property=None,
                  color_stops=None,
                  color_default='grey',
@@ -729,75 +733,28 @@ class ChoroplethViz(MapViz):
         """
         super(ChoroplethViz, self).__init__(data, *args, **kwargs)
         
-        self.template = 'choropleth'
-        self.check_vector_template()
+        layer = ChoroplethLayer(data,
+                                vector_url=vector_url,
+                                vector_layer_name=vector_layer_name,
+                                vector_join_property=vector_join_property,
+                                data_join_property=data_join_property,
+                                disable_data_join=disable_data_join,
+                                color_property=color_property,
+                                color_stops=color_stops,
+                                color_default=color_default,
+                                color_function_type=color_function_type,
+                                line_color=line_color,
+                                line_stroke=line_stroke,
+                                line_width=line_width,
+                                line_opacity=line_opacity,
+                                height_property=height_property,
+                                height_stops=height_stops,
+                                height_default=height_default,
+                                height_function_type=height_function_type,
+                                legend_key_shape=legend_key_shape,
+                                highlight_color=highlight_color)
 
-        self.color_property = color_property
-        self.color_stops = color_stops
-        self.color_default = color_default
-        self.color_function_type = color_function_type
-        self.line_color = line_color
-        self.line_stroke = line_stroke
-        self.line_width = line_width
-        self.line_opacity = line_opacity
-        self.height_property = height_property
-        self.height_stops = height_stops
-        self.height_default = height_default
-        self.height_function_type = height_function_type
-        self.legend_key_shape = legend_key_shape
-        self.highlight_color = highlight_color
-
-    def add_unique_template_variables(self, options):
-        """Update map template variables specific to heatmap visual"""
-
-        # set line stroke dash interval based on line_stroke property
-        if self.line_stroke in ["dashed", "--"]:
-            self.line_dash_array = [6, 4]
-        elif self.line_stroke in ["dotted", ":"]:
-            self.line_dash_array = [0.5, 4]
-        elif self.line_stroke in ["dash dot", "-."]:
-            self.line_dash_array = [6, 4, 0.5, 4]
-        elif self.line_stroke in ["solid", "-"]:
-            self.line_dash_array = [1, 0]
-        else:
-            # default to solid line
-            self.line_dash_array = [1, 0]
-
-        # check if choropleth map should include 3-D extrusion
-        self.extrude = all([bool(self.height_property), bool(self.height_stops)])
-
-        # common variables for vector and geojson-based choropleths
-        options.update(dict(
-            colorStops=self.color_stops,
-            colorProperty=self.color_property,
-            colorType=self.color_function_type,
-            defaultColor=self.color_default,
-            lineColor=self.line_color,
-            lineDashArray=self.line_dash_array,
-            lineStroke=self.line_stroke,
-            lineWidth=self.line_width,
-            lineOpacity=self.line_opacity,
-            extrudeChoropleth=self.extrude,
-            highlightColor=self.highlight_color
-        ))
-        if self.extrude:
-            options.update(dict(
-                heightType=self.height_function_type,
-                heightProperty=self.height_property,
-                heightStops=self.height_stops,
-                defaultHeight=self.height_default,
-            ))
-
-        # vector-based choropleth map variables
-        if self.vector_source:
-            options.update(vectorColorStops=self.generate_vector_color_map())
-            
-            if self.extrude:
-                options.update(vectorHeightStops=self.generate_vector_numeric_map('height'))
-
-        # geojson-based choropleth map variables
-        else:
-            options.update(geojson_data=json.dumps(self.data, ensure_ascii=False))
+        self.add_layer(layer)
 
 
 class ImageViz(MapViz):
@@ -873,6 +830,11 @@ class LinestringViz(MapViz):
 
     def __init__(self,
                  data,
+                 vector_url=None,
+                 vector_layer_name=None,
+                 vector_join_property=None,
+                 data_join_property=None,
+                 disable_data_join=False,
                  color_property=None,
                  color_stops=None,
                  color_default='grey',
@@ -906,67 +868,22 @@ class LinestringViz(MapViz):
         """
         super(LinestringViz, self).__init__(data, *args, **kwargs)
         
-        self.template = 'linestring'
-        self.check_vector_template()
+        layer = LinestringLayer(data,
+                                vector_url=vector_url,
+                                vector_layer_name=vector_layer_name,
+                                vector_join_property=vector_join_property,
+                                data_join_property=data_join_property,
+                                disable_data_join=disable_data_join,
+                                color_property=color_property,
+                                color_stops=color_stops,
+                                color_default=color_default,
+                                color_function_type=color_function_type,
+                                line_stroke=line_stroke,
+                                line_width_property=line_width_property,
+                                line_width_stops=line_width_stops,
+                                line_width_default=line_width_default,
+                                line_width_function_type=line_width_function_type,
+                                legend_key_shape=legend_key_shape,
+                                highlight_color=highlight_color)
 
-        self.color_property = color_property
-        self.color_stops = color_stops
-        self.color_default = color_default
-        self.color_function_type = color_function_type
-        self.line_stroke = line_stroke
-        self.line_width_property = line_width_property
-        self.line_width_stops = line_width_stops
-        self.line_width_default = line_width_default
-        self.line_width_function_type = line_width_function_type
-        self.legend_key_shape = legend_key_shape
-        self.highlight_color = highlight_color
-
-    def add_unique_template_variables(self, options):
-        """Update map template variables specific to linestring visual"""
-
-        # set line stroke dash interval based on line_stroke property
-        if self.line_stroke in ["dashed", "--"]:
-            self.line_dash_array = [6, 4]
-        elif self.line_stroke in ["dotted", ":"]:
-            self.line_dash_array = [0.5, 4]
-        elif self.line_stroke in ["dash dot", "-."]:
-            self.line_dash_array = [6, 4, 0.5, 4]
-        elif self.line_stroke in ["solid", "-"]:
-            self.line_dash_array = [1, 0]
-        else:
-            # default to solid line
-            self.line_dash_array = [1, 0]
-
-        # common variables for vector and geojson-based linestring maps
-        options.update(dict(
-            colorStops=self.color_stops,
-            colorProperty=self.color_property,
-            colorType=self.color_function_type,
-            defaultColor=self.color_default,
-            lineColor=self.color_default,
-            lineDashArray=self.line_dash_array,
-            lineStroke=self.line_stroke,
-            widthStops=self.line_width_stops,
-            widthProperty=self.line_width_property,
-            widthType=self.line_width_function_type,
-            defaultWidth=self.line_width_default,
-            highlightColor=self.highlight_color
-        ))
-
-        # vector-based linestring map variables
-        if self.vector_source:
-            options.update(dict(
-                vectorColorStops=[[0, self.color_default]],
-                vectorWidthStops=[[0, self.line_width_default]],
-            ))
-
-            if self.color_property:
-                options.update(vectorColorStops=self.generate_vector_color_map())
-        
-            if self.line_width_property:
-                options.update(vectorWidthStops=self.generate_vector_numeric_map('line_width'))
-
-        # geojson-based linestring map variables
-        else:
-            options.update(geojson_data=json.dumps(self.data, ensure_ascii=False))
-
+        self.add_layer(layer)

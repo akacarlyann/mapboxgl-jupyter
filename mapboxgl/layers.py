@@ -1,13 +1,7 @@
-import codecs
 import json
-import os
-
-from IPython.core.display import HTML, display
 
 import numpy
-import requests
 
-from mapboxgl.errors import LegendError
 from mapboxgl.utils import color_map, numeric_map, img_encode, geojson_to_dict_list
 from mapboxgl import templates
 
@@ -25,8 +19,6 @@ class VectorMixin(object):
         # loop through features in self.data to create join-data map
         for row in self.data:
             
-            # print(row)
-
             # map color to JSON feature using color_property
             color = color_map(row[self.color_property], self.color_stops, self.color_default)
 
@@ -64,11 +56,11 @@ class VectorMixin(object):
     def check_vector_template(self):
         """Determines if features are defined as vector source based on MapViz arguments."""
 
-        if self.vector_url is not None and self.vector_layer_name is not None:
-            self.template = 'vector_' + self.template
-            self.vector_source = True
-        else:
-            self.vector_source = False
+        self.vector_source = False
+        if getattr(self, 'vector_url') is not None:
+            if self.vector_layer_name is not None:
+                self.template = self.template.replace('layers/', 'layers/vector_')
+                self.vector_source = True
 
 
 class MapLayer(object):
@@ -93,7 +85,8 @@ class MapLayer(object):
                  min_zoom=0,
                  max_zoom=24,
                  layer_id=None,
-                 popup_open_action='hover'):
+                 popup_open_action='hover',
+                 legend=False):
         """
         :param data: GeoJSON Feature Collection
         :param vector_url: optional property to define vector data source
@@ -122,12 +115,12 @@ class MapLayer(object):
         self.data_join_property = data_join_property
         self.disable_data_join = disable_data_join
 
-        self.template = 'layer'
+        self.template = 'layers/layer'
         try:
             self.check_vector_template()
-        except AttributeError:
+        except:
             self.vector_source = False
-
+        
         self.below_layer = below_layer
         self.opacity = opacity
         self.label_property = label_property
@@ -180,13 +173,16 @@ class MapLayer(object):
             )
             data = geojson_to_dict_list(self.data)
             if bool(data):
-                options.update(joinData=json.dumps(data, ensure_ascii=False))
+                options.update(joinData=json.dumps(self.data, ensure_ascii=False))
 
         self.add_unique_layer_variables(options)
 
         return templates.format(self.template, **options)
 
     def add_unique_layer_variables(self, options):
+        pass
+
+    def add_legend_variables(self):
         pass
 
 
@@ -207,7 +203,9 @@ class CircleLayer(VectorMixin, MapLayer):
         
         super(CircleLayer, self).__init__(data, *args, **kwargs)
 
-        self.template = 'circle_layer'
+        self.template = 'layers/circle_layer'
+        self.check_vector_template()
+
         self.color_property = color_property
         self.color_stops = color_stops
         self.radius = radius
@@ -232,7 +230,7 @@ class CircleLayer(VectorMixin, MapLayer):
             options.update(vectorColorStops=self.generate_vector_color_map())
 
 
-class GraduatedCircleLayer(MapLayer):
+class GraduatedCircleLayer(VectorMixin, MapLayer):
 
     def __init__(self,
                  data,
@@ -266,7 +264,9 @@ class GraduatedCircleLayer(MapLayer):
         """
         super(GraduatedCircleLayer, self).__init__(data, *args, **kwargs)
 
-        self.template = 'graduated_circle_layer'
+        self.template = 'layers/graduated_circle_layer'
+        self.check_vector_template()
+
         self.color_default = color_default
         self.color_function_type = color_function_type
         self.color_property = color_property
@@ -301,7 +301,7 @@ class GraduatedCircleLayer(MapLayer):
                 vectorRadiusStops=self.generate_vector_numeric_map('radius')))
 
 
-class HeatmapLayer(MapLayer):
+class HeatmapLayer(VectorMixin, MapLayer):
 
     def __init__(self,
                  data,
@@ -315,7 +315,9 @@ class HeatmapLayer(MapLayer):
 
         super(HeatmapLayer, self).__init__(data, *args, **kwargs)
 
-        self.template = 'heatmap_layer'
+        self.template = 'layers/heatmap_layer'
+        self.check_vector_template()
+
         self.weight_property = weight_property
         self.weight_stops = weight_stops
 
@@ -381,7 +383,7 @@ class ClusteredCircleLayer(MapLayer):
        
         super(ClusteredCircleLayer, self).__init__(data, *args, **kwargs)
 
-        self.template = 'clustered_circle_layer'
+        self.template = 'layers/clustered_circle_layer'
 
         self.color_stops = color_stops
         self.radius_stops = radius_stops
@@ -407,10 +409,102 @@ class ClusteredCircleLayer(MapLayer):
         ))
 
 
-# class ChoroplethLayer(MapLayer):
+class ChoroplethLayer(VectorMixin, MapLayer):
 
-#     def __init__(self, *args, **kwargs):
-#         self.below_layer = below_layer
+    def __init__(self, 
+                 data,
+                 color_property=None,
+                 color_stops=None,
+                 color_default='grey',
+                 color_function_type='interpolate',
+                 line_color='white',
+                 line_stroke='solid',
+                 line_width=1,
+                 line_opacity=1,
+                 height_property=None,      
+                 height_stops=None,
+                 height_default=0.0,
+                 height_function_type='interpolate',
+                 legend_key_shape='rounded-square',
+                 highlight_color='black',
+                 *args,
+                 **kwargs):
+
+        super(ChoroplethLayer, self).__init__(data, *args, **kwargs)
+
+        self.template = 'layers/choropleth_layer'
+        try:
+            self.check_vector_template()
+        except:
+            self.vector_source = False
+
+        self.color_property = color_property
+        self.color_stops = color_stops
+        self.color_default = color_default
+        self.color_function_type = color_function_type
+        self.line_color = line_color
+        self.line_stroke = line_stroke
+        self.line_width = line_width
+        self.line_opacity = line_opacity
+        self.height_property = height_property
+        self.height_stops = height_stops
+        self.height_default = height_default
+        self.height_function_type = height_function_type
+        self.legend_key_shape = legend_key_shape
+        self.highlight_color = highlight_color
+
+    def add_unique_layer_variables(self, options):
+        """Update map template variables specific to choropleth visual"""
+
+        # set line stroke dash interval based on line_stroke property
+        if self.line_stroke in ["dashed", "--"]:
+            self.line_dash_array = [6, 4]
+        elif self.line_stroke in ["dotted", ":"]:
+            self.line_dash_array = [0.5, 4]
+        elif self.line_stroke in ["dash dot", "-."]:
+            self.line_dash_array = [6, 4, 0.5, 4]
+        elif self.line_stroke in ["solid", "-"]:
+            self.line_dash_array = [1, 0]
+        else:
+            # default to solid line
+            self.line_dash_array = [1, 0]
+
+        # check if choropleth map should include 3-D extrusion
+        self.extrude = all([bool(self.height_property), bool(self.height_stops)])
+        # self.extrude = True
+
+        # common variables for vector and geojson-based choropleths
+        options.update(dict(
+            colorStops=self.color_stops,
+            colorProperty=self.color_property,
+            colorType=self.color_function_type,
+            defaultColor=self.color_default,
+            lineColor=self.line_color,
+            lineDashArray=self.line_dash_array,
+            lineStroke=self.line_stroke,
+            lineWidth=self.line_width,
+            lineOpacity=self.line_opacity,
+            extrudeChoropleth=self.extrude,
+            highlightColor=self.highlight_color
+        ))
+        if self.extrude:
+            options.update(dict(
+                heightType=self.height_function_type,
+                heightProperty=self.height_property,
+                heightStops=self.height_stops,
+                defaultHeight=self.height_default,
+            ))
+
+        # vector-based choropleth map variables
+        if self.vector_source:
+            options.update(vectorColorStops=self.generate_vector_color_map())
+            
+            if self.extrude:
+                options.update(vectorHeightStops=self.generate_vector_numeric_map('height'))
+
+        # geojson-based choropleth map variables
+        else:
+            options.update(geojson_data=json.dumps(self.data, ensure_ascii=False))
 
 
 class ImageLayer(MapLayer):
@@ -424,7 +518,7 @@ class ImageLayer(MapLayer):
 
         super(ImageLayer, self).__init__(None, *args, **kwargs)
 
-        self.template = 'image_layer'
+        self.template = 'layers/image_layer'
         if type(image) is numpy.ndarray:
             image = img_encode(image)
         self.image = image
@@ -462,7 +556,7 @@ class RasterTilesLayer(MapLayer):
         """
         super(RasterTilesLayer, self).__init__(None, *args, **kwargs)
 
-        self.template = 'raster_layer'
+        self.template = 'layers/raster_layer'
         self.tiles_url = tiles_url
         self.tiles_size = tiles_size
         self.tiles_bounds = tiles_bounds
@@ -479,8 +573,105 @@ class RasterTilesLayer(MapLayer):
             tiles_bounds=self.tiles_bounds if self.tiles_bounds else 'undefined'))
 
 
-# class LinestringLayer(MapLayer):
+class LinestringLayer(VectorMixin, MapLayer):
 
-#     def __init__(self, *args, **kwargs):
-#         self.below_layer = below_layer
+    def __init__(self, 
+                 data,
+                 color_property=None,
+                 color_stops=None,
+                 color_default='grey',
+                 color_function_type='interpolate',
+                 line_stroke='solid',
+                 line_width_property=None,
+                 line_width_stops=None,
+                 line_width_default=1,
+                 line_width_function_type='interpolate',
+                 legend=True,
+                 legend_key_shape='line',
+                 *args,
+                 **kwargs):
+        """
+        Construct a Mapviz object
 
+        :param data: can be either GeoJSON (containing polygon features) or JSON for data-join technique with vector polygons
+        :param color_property: property to determine line color
+        :param color_stops: property to determine line color
+        :param color_default: property to determine default line color if match lookup fails
+        :param color_function_type: property to determine `type` used by Mapbox to assign color
+        :param line_stroke: property to determine line stroke (solid, dashed, dotted, dash dot)
+        :param line_width_property: property to determine line width
+        :param line_width_stops: property to determine line width
+        :param line_width_default: property to determine default line width if match lookup fails
+        :param line_width_function_type: property to determine `type` used by Mapbox to assign line width
+        :param highlight_color: color for feature selection, hover, or highlight
+        """
+
+        super(LinestringLayer, self).__init__(data, *args, **kwargs)
+        
+        self.template = 'layers/linestring_layer'
+        self.check_vector_template()
+
+        self.color_property = color_property
+        self.color_stops = color_stops
+        self.color_default = color_default
+        self.color_function_type = color_function_type
+        self.line_stroke = line_stroke
+        self.line_width_property = line_width_property
+        self.line_width_stops = line_width_stops
+        self.line_width_default = line_width_default
+        self.line_width_function_type = line_width_function_type
+        self.legend_key_shape = legend_key_shape
+        self.highlight_color = highlight_color
+
+    def add_unique_layer_variables(self, options):
+        """Update map template variables specific to linestring visual"""
+
+        # set line stroke dash interval based on line_stroke property
+        if self.line_stroke in ["dashed", "--"]:
+            self.line_dash_array = [6, 4]
+        elif self.line_stroke in ["dotted", ":"]:
+            self.line_dash_array = [0.5, 4]
+        elif self.line_stroke in ["dash dot", "-."]:
+            self.line_dash_array = [6, 4, 0.5, 4]
+        elif self.line_stroke in ["solid", "-"]:
+            self.line_dash_array = [1, 0]
+        else:
+            # default to solid line
+            self.line_dash_array = [1, 0]
+
+        # common variables for vector and geojson-based linestring maps
+        options.update(dict(
+            colorStops=self.color_stops,
+            colorProperty=self.color_property,
+            colorType=self.color_function_type,
+            defaultColor=self.color_default,
+            lineColor=self.color_default,
+            lineDashArray=self.line_dash_array,
+            lineStroke=self.line_stroke,
+            widthStops=self.line_width_stops,
+            widthProperty=self.line_width_property,
+            widthType=self.line_width_function_type,
+            defaultWidth=self.line_width_default,
+            highlightColor=self.highlight_color
+        ))
+
+        # legend settings
+        options.update(legendKeyShape=self.legend_key_shape,
+                       legendLayout='vertical')
+
+        # vector-based linestring map variables
+        if self.vector_source:
+            options.update(dict(
+                vectorColorStops=[[0, self.color_default]],
+                vectorWidthStops=[[0, self.line_width_default]],
+            ))
+
+            if self.color_property:
+                options.update(vectorColorStops=self.generate_vector_color_map())
+        
+            if self.line_width_property:
+                options.update(vectorWidthStops=self.generate_vector_numeric_map('line_width'))
+
+        # geojson-based linestring map variables
+        else:
+            options.update(geojson_data=json.dumps(self.data, ensure_ascii=False))

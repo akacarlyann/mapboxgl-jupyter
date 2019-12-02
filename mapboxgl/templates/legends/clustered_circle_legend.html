@@ -1,0 +1,14 @@
+<!-- update legend item key style -->
+{% block extra_css %}
+<style>
+    .gradient-bar.bordered, .legend-key.bordered { border: solid {{ strokeColor }} {{ strokeWidth }}px; }
+</style>
+{% endblock extra_css %}
+
+{% block legend %}
+    
+    {% if showLegend %}
+        calcColorLegend({{ colorStops }}, "Point Density");
+    {% endif %}
+
+{% endblock legend %}

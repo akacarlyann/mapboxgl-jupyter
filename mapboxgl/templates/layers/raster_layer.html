@@ -1,6 +1,5 @@
 
-    {% block legend %}{% endblock legend %}
-
+    {% block raster %}
 
     let params = {
         "type": "raster",
@@ -17,4 +16,6 @@
         "id": "raster-tiles-{{ layerId }}",
         "type": "raster",
         "source": "raster-tiles-{{ layerId }}"
-    }, "{{ belowLayer }}" );
+    }, {{ belowLayer }} );
+
+    {% endblock raster %}

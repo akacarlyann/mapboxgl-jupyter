@@ -1,0 +1,25 @@
+{% block extra_css %}
+<style>
+    .gradient-bar.bordered, .legend-key.bordered { border: solid {{ strokeColor|default("black") }} {{ strokeWidth|default("1") }}px; }
+</style>
+{% endblock extra_css %}
+
+{% block legend %}
+    
+    {% if showLegend %}
+        
+        {% if colorStops and colorProperty and radiusProperty %}
+            
+            calcColorLegend({{ colorStops }}, "{{ colorProperty }}");
+
+        {% endif %}
+
+        {% if radiusStops and radiusProperty %}
+
+            calcRadiusLegend({{ radiusStops }}, "{{ radiusProperty }}", "{{ defaultColor }}");
+        
+        {% endif %}
+
+    {% endif %}
+
+{% endblock legend %}
